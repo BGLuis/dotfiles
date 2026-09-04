@@ -61,11 +61,25 @@ Os pacotes são gerenciados centralmente no arquivo [`.chezmoidata/packages.yaml
 
 | Sistema | Gerenciador | Pacotes Instalados |
 |---|---|---|
-| **Todos os Sistemas** | Nativo do SO | Git, Starship, Bitwarden, Tailscale, Spotify |
+| **Todos os Sistemas** | Nativo do SO | Git, Starship, Bitwarden, Tailscale, Spotify, Discord, VS Code |
 | **Linux (Geral)** | Apt / Pacman | Kitty, Nano |
-| **Arch Linux** | Pacman + Yay (AUR) | Quickshell, Hyprland, Hypridle, Hyprlock, Vicinae, Btop, Lazygit, Grim/Slurp, Wayland tools |
-| **macOS** | Homebrew | Git, Starship, Nano, Btop, Lazygit, Kitty, Bitwarden, Tailscale, Spotify |
-| **Windows** | Winget | Git, Starship, Bitwarden, Tailscale, Spotify, Nano |
+| **Arch Linux** | Pacman + Yay (AUR) | Quickshell, Hyprland, Hypridle, Hyprlock, Vicinae, Btop, Lazygit, Grim/Slurp, Wayland tools, Fontes (`ttf-jetbrains-mono-nerd`, `ttf-material-symbols-variable`, `ttf-rubik-vf`) |
+| **macOS** | Homebrew | Git, Starship, Nano, Btop, Lazygit, Kitty, Bitwarden, Tailscale, Spotify, Discord, VS Code, Fonte (`font-jetbrains-mono-nerd-font`) |
+| **Windows** | Winget | Git, Starship, Bitwarden, Tailscale, Spotify, Discord, VS Code, Nano, Fonte (`JetBrains.JetBrainsMonoNF`) |
+
+---
+
+## 🔤 Gestão Automática de Fontes (Zero Configuração)
+
+O repositório gerencia automaticamente as fontes necessárias para o terminal e a interface gráfica:
+
+1. **JetBrains Mono Nerd Font**: Ícones e glifos do terminal ([Kitty](dot_config/kitty/kitty.conf)), prompt ([Starship](dot_config/starship.toml)), Lazygit e Zsh.
+2. **Rubik**: Interface de status do [Quickshell](.chezmoiexternal.yaml.tmpl) e relógio do [Hyprlock](dot_config/hypr/hyprlock.conf).
+3. **Material Symbols Rounded**: Ícones do sistema e widgets do Hyprlock/Quickshell.
+
+### Como funciona o provisionamento:
+* **Via Pacotes de Sistema**: Incluídos nas listas de pacotes (`pacman`, `yay`, `brew cask` e `winget`).
+* **Fallback Automático de Usuário (`run_onchange_after_install-fonts.sh.tmpl`)**: Se você estiver em uma máquina sem `sudo` ou pular a instalação de pacotes no menu interativo, o script baixa automaticamente as fontes ausentes para `~/.local/share/fonts/` e atualiza o `fontconfig` via `fc-cache`. Nenhum ícone fica quebrado!
 
 ---
 

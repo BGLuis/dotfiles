@@ -27,11 +27,15 @@ packages:
       - cliphist
       - wl-clipboard
       - ttf-jetbrains-mono-nerd
+      - ttf-material-symbols-variable
       - tailscale
+      - discord
     aur:
       - vicinae-bin
       - bitwarden
+      - visual-studio-code-bin
       - spotify-launcher
+      - ttf-rubik-vf
     laptop:
       - brightnessctl
 
@@ -49,6 +53,8 @@ packages:
       - starship --classic
       - bitwarden
       - spotify
+      - discord
+      - code --classic
 
   # Pacotes para macOS (Homebrew)
   darwin:
@@ -64,6 +70,9 @@ packages:
       - bitwarden
       - tailscale
       - spotify
+      - discord
+      - visual-studio-code
+      - font-jetbrains-mono-nerd-font
 
   # Pacotes para Windows (Winget)
   windows:
@@ -73,4 +82,7 @@ packages:
       - Bitwarden.Bitwarden
       - Tailscale.Tailscale
       - Spotify.Spotify
+      - Discord.Discord
+      - Microsoft.VisualStudioCode
       - GNU.Nano
+      - JetBrains.JetBrainsMonoNF
