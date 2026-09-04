@@ -1,0 +1,34 @@
+# Window Manager & Wayland Environment
+hyprland
+hypridle
+hyprlock
+hyprpaper
+hyprsunset
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+polkit-kde-agent
+qt5-wayland
+qt6-wayland
+qt6ct
+
+# Desktop Shell & Launcher
+quickshell
+wofi
+
+# Terminal & Shell
+kitty
+zsh
+starship
+fastfetch
+ttf-jetbrains-mono-nerd
+
+# Tools & Utilities
+btop
+lazygit
+grim
+slurp
+cliphist
+wl-clipboard
+curl
+git
+git-lfs

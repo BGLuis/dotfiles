@@ -1,0 +1,16 @@
+# 1. SEGURANÇA E NÚCLEO
+[[ $- != *i* ]] && return
+
+# Carrega os módulos em ordem lógica
+source "$ZDOTDIR/env.zsh"
+source "$ZDOTDIR/options.zsh"
+source "$ZDOTDIR/plugins.zsh"
+source "$ZDOTDIR/functions.zsh"
+source "$ZDOTDIR/aliases.zsh"
+source "$ZDOTDIR/bindings.zsh"
+source "$ZDOTDIR/completions.zsh"
+
+# Compilação automática de bytecode dos arquivos de configuração
+for f in $ZDOTDIR/*.zsh; do
+  [[ -s ${f}.zwc && ${f}.zwc -nt $f ]] || zcompile $f 2>/dev/null
+done

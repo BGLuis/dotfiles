@@ -1,0 +1,5 @@
+{{- $choices := list "desktop" "laptop" -}}
+{{- $chassisType := promptChoiceOnce . "chassisType" "Qual o tipo deste dispositivo? (desktop/laptop)" $choices "desktop" -}}
+
+[data]
+    chassisType = {{ $chassisType | quote }}

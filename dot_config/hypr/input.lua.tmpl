@@ -1,0 +1,26 @@
+{{- $chassisType := "desktop" -}}
+{{- if hasKey . "chassisType" -}}
+{{-   $chassisType = .chassisType -}}
+{{- end -}}
+hl.config({
+    input = {
+        kb_layout = "us",
+        kb_variant = "intl",
+        kb_model = "",
+        kb_options = "",
+        kb_rules = "",
+        follow_mouse = 1,
+        sensitivity = 0,
+        touchpad = {
+            natural_scroll = {{ if eq $chassisType "laptop" }}true{{ else }}false{{ end }}
+        }
+    },
+    gestures = {
+        workspace_swipe = {{ if eq $chassisType "laptop" }}true{{ else }}false{{ end }}
+    }
+})
+
+hl.device({
+    name = "epic-mouse-v1",
+    sensitivity = -0.5
+})

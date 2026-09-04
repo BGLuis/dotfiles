@@ -1,0 +1,39 @@
+{{- if eq .chezmoi.osRelease.id "arch" -}}
+#!/bin/bash
+set -euo pipefail
+
+# packages.txt hash: {{ include "packages.txt" | sha256sum }}
+
+echo "==> [chezmoi] Verificando e instalando pacotes essenciais no Arch Linux..."
+
+if ! command -v pacman >/dev/null 2>&1; then
+    echo "Pacman não encontrado. Pulando."
+    exit 0
+fi
+
+# Ler pacotes ignorando comentários e linhas vazias
+PACKAGES=()
+while IFS= read -r line; do
+    [[ -z "$line" || "$line" =~ ^# ]] && continue
+    PACKAGES+=("$line")
+done < "{{ .chezmoi.sourceDir }}/packages.txt"
+
+if [ ${#PACKAGES[@]} -gt 0 ]; then
+    echo "==> Instalando pacotes: ${PACKAGES[*]}"
+    sudo pacman -S --needed --noconfirm "${PACKAGES[@]}" || {
+        echo "Aviso: Alguns pacotes não puderam ser instalados imediatamente."
+    }
+fi
+
+# Instala yay se não existir
+if ! command -v yay >/dev/null 2>&1; then
+    echo "==> yay não encontrado. Compilando yay-bin a partir do AUR..."
+    sudo pacman -S --needed --noconfirm git base-devel
+    BUILD_DIR=$(mktemp -d)
+    git clone https://aur.archlinux.org/yay-bin.git "$BUILD_DIR/yay-bin"
+    (cd "$BUILD_DIR/yay-bin" && makepkg -si --noconfirm)
+    rm -rf "$BUILD_DIR"
+fi
+
+echo "==> [chezmoi] Instalação de pacotes concluída!"
+{{- end }}

@@ -1,0 +1,79 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Adiciona uma linha em branco entre os comandos para o terminal respirar
+add_newline = false
+
+# Configuração do seu usuário
+[username]
+style_user = 'bold green'
+style_root = 'bold red'
+format = '[$user]($style)'
+show_always = true
+
+[hostname]
+ssh_only = true
+format = '󰖟 [$hostname](bold purple)'
+disabled = false
+
+[directory]
+style = "bold cyan"
+read_only = " 󰌾"
+truncation_length = 2
+truncate_to_repo = false
+read_only_style = 'red'
+format = " [ $path]($style)[$read_only]($read_only_style) "
+truncation_symbol = '…/'
+
+[package]
+disabled = true
+
+
+[git_branch]
+symbol = ' '
+format = '[$symbol$branch](bold purple) '
+
+[git_status]
+disabled = true
+format = '([\[$all_status$ahead_behind\]]($style) )'
+stashed = '\$ '
+staged = '[+$count ](green)'
+modified = '[●$count ](yellow)'
+untracked = '[?$count ](white)'
+deleted = '[✘$count ](red)'
+ahead = '⇡$count '
+behind = '⇣$count '
+diverged = '⇡$ahead_count ⇣$behind_count '
+conflicted = '⚡ '
+
+[character]
+success_symbol = "[λ](bold purple)"
+#error_symbol = "[✗](bold red)"
+
+[cmd_duration]
+min_time = 2_000
+format = "took [󱎫 $duration]($style) "
+style = "bold yellow"
+
+
+[os]
+disabled = true
+format = "[$symbol]($style) "
+
+[os.symbols]
+Alpine = " "
+Arch = " "
+Debian = " "
+EndeavourOS = " "
+Fedora = " "
+Linux = " "
+Macos = " "
+Manjaro = " "
+Mint = " "
+NixOS = " "
+openSUSE = " "
+Pop = " "
+SUSE = " "
+Ubuntu = " "
+Windows = " "
+
+

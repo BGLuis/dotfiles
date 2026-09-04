@@ -1,0 +1,11 @@
+README.md
+LICENSE
+.git*
+packages.txt
+**/*~
+**/*.bak
+**/*.zwc
+.config/zsh/.zsh_history*
+.config/zsh/RELATORIO.md
+.config/hypr/backup_conf/**
+.config/hypr/hyprlock/Untitled-1.md
