@@ -4,12 +4,25 @@ set -euo pipefail
 
 # hash: {{ include ".chezmoidata/packages.yaml" | sha256sum }}
 
-echo "==> [chezmoi] Instalando pacotes no Arch Linux..."
+if ! command -v pacman >/dev/null 2>&1; then
+    echo "Pacman não encontrado. Pulando instalação de pacotes."
+    exit 0
+fi
 
-PACMAN_PKGS=(
+# Carregar listas de pacotes
+PACMAN_ALL=(
 {{- range .packages.arch.pacman }}
   {{ . | quote }}
 {{- end }}
+)
+
+AUR_ALL=(
+{{- range .packages.arch.aur }}
+  {{ . | quote }}
+{{- end }}
+)
+
+LAPTOP_ALL=(
 {{- if and (hasKey . "chassisType") (eq .chassisType "laptop") }}
 {{-   range .packages.arch.laptop }}
   {{ . | quote }}
@@ -17,31 +30,159 @@ PACMAN_PKGS=(
 {{- end }}
 )
 
-if command -v pacman >/dev/null 2>&1; then
-    echo "==> Instalando pacotes oficiais via pacman..."
-    sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}" || true
+# Unificar lista com identificação de origem
+ALL_PKGS=()
+PKG_SOURCES=()
+
+for p in "${PACMAN_ALL[@]}"; do
+    ALL_PKGS+=("$p")
+    PKG_SOURCES+=("Oficial")
+done
+
+for l in "${LAPTOP_ALL[@]}"; do
+    ALL_PKGS+=("$l")
+    PKG_SOURCES+=("Laptop")
+done
+
+for a in "${AUR_ALL[@]}"; do
+    ALL_PKGS+=("$a")
+    PKG_SOURCES+=("AUR")
+done
+
+# Array de seleção: 1 = selecionado, 0 = desmarcado
+SELECTED=()
+for _ in "${ALL_PKGS[@]}"; do
+    SELECTED+=(1)
+done
+
+# Verificar se há terminal interativo disponível
+INTERACTIVE=0
+if [ -t 0 ] || [ -e /dev/tty ]; then
+    INTERACTIVE=1
 fi
 
-# Instala yay se necessário
-if ! command -v yay >/dev/null 2>&1; then
-    echo "==> yay não encontrado. Compilando yay-bin a partir do AUR..."
-    sudo pacman -S --needed --noconfirm git base-devel
-    BUILD_DIR=$(mktemp -d)
-    git clone https://aur.archlinux.org/yay-bin.git "$BUILD_DIR/yay-bin"
-    (cd "$BUILD_DIR/yay-bin" && makepkg -si --noconfirm)
-    rm -rf "$BUILD_DIR"
+if [ "$INTERACTIVE" -eq 1 ]; then
+    while true; do
+        clear 2>/dev/null || true
+        echo "=========================================================================="
+        echo " 📦 Menu Interativo de Pacotes - Arch Linux"
+        echo "=========================================================================="
+        echo " Selecione os pacotes que deseja instalar nesta máquina:"
+        echo ""
+        for i in "${!ALL_PKGS[@]}"; do
+            status=" "
+            [ "${SELECTED[$i]}" -eq 1 ] && status="✓"
+            printf "   [%2d] [%s] [%-7s] %s\n" "$((i+1))" "$status" "${PKG_SOURCES[$i]}" "${ALL_PKGS[$i]}"
+        done
+        echo ""
+        echo "=========================================================================="
+        echo " [ENTER]          - Confirmar e instalar os pacotes marcados [✓]"
+        echo " [números]        - Digite os números para marcar/desmarcar (ex: 6 7)"
+        echo " [t]              - Inverter tudo (marcar todos / desmarcar todos)"
+        echo " [e]              - Abrir lista no editor (nano) para apagar manualmente"
+        echo " [p]              - Pular instalação de pacotes (continuar só com dotfiles)"
+        echo "=========================================================================="
+        echo -n "Sua escolha [Pressione ENTER para instalar tudo]: "
+        read -r user_choice < /dev/tty || break
+
+        # ENTER vazio: prosseguir com a instalação
+        if [ -z "$user_choice" ]; then
+            break
+        fi
+
+        # Pular instalação de pacotes
+        if [[ "$user_choice" =~ ^[pP]$ ]]; then
+            echo "==> Instalação de pacotes cancelada pelo usuário."
+            exit 0
+        fi
+
+        # Alternar todos
+        if [[ "$user_choice" =~ ^[tT]$ ]]; then
+            all_marked=1
+            for s in "${SELECTED[@]}"; do
+                [ "$s" -eq 0 ] && { all_marked=0; break; }
+            done
+            new_val=$((1 - all_marked))
+            for idx in "${!SELECTED[@]}"; do
+                SELECTED[$idx]=$new_val
+            done
+            continue
+        fi
+
+        # Editar no nano
+        if [[ "$user_choice" =~ ^[eE]$ ]]; then
+            TMP_EDIT=$(mktemp --suffix=.txt)
+            echo "# Apague as linhas dos pacotes que NÃO quer instalar." > "$TMP_EDIT"
+            echo "# Salve (Ctrl+O, Enter) e feche (Ctrl+X) para confirmar." >> "$TMP_EDIT"
+            for i in "${!ALL_PKGS[@]}"; do
+                if [ "${SELECTED[$i]}" -eq 1 ]; then
+                    echo "${ALL_PKGS[$i]}" >> "$TMP_EDIT"
+                fi
+            done
+            ${EDITOR:-nano} "$TMP_EDIT" < /dev/tty > /dev/tty || true
+            for i in "${!ALL_PKGS[@]}"; do
+                if grep -qx "${ALL_PKGS[$i]}" "$TMP_EDIT" 2>/dev/null; then
+                    SELECTED[$i]=1
+                else
+                    SELECTED[$i]=0
+                fi
+            done
+            rm -f "$TMP_EDIT"
+            continue
+        fi
+
+        # Processar números digitados
+        for token in $user_choice; do
+            if [[ "$token" =~ ^[0-9]+$ ]] && [ "$token" -ge 1 ] && [ "$token" -le "${#ALL_PKGS[@]}" ]; then
+                idx=$((token - 1))
+                SELECTED[$idx]=$(( 1 - SELECTED[$idx] ))
+            fi
+        done
+    done
 fi
 
-AUR_PKGS=(
-{{- range .packages.arch.aur }}
-  {{ . | quote }}
-{{- end }}
-)
+# Separar pacotes finais marcados
+FINAL_PACMAN=()
+FINAL_AUR=()
 
-if [ ${#AUR_PKGS[@]} -gt 0 ]; then
-    echo "==> Instalando pacotes do AUR via yay..."
-    yay -S --needed --noconfirm "${AUR_PKGS[@]}" || true
+for i in "${!ALL_PKGS[@]}"; do
+    if [ "${SELECTED[$i]}" -eq 1 ]; then
+        if [ "${PKG_SOURCES[$i]}" == "AUR" ]; then
+            FINAL_AUR+=("${ALL_PKGS[$i]}")
+        else
+            FINAL_PACMAN+=("${ALL_PKGS[$i]}")
+        fi
+    fi
+done
+
+if [ ${#FINAL_PACMAN[@]} -eq 0 ] && [ ${#FINAL_AUR[@]} -eq 0 ]; then
+    echo "==> Nenhum pacote selecionado para instalação."
+    exit 0
 fi
 
-echo "==> [chezmoi] Instalação no Arch concluída!"
+# Instalar pacotes oficiais
+if [ ${#FINAL_PACMAN[@]} -gt 0 ]; then
+    echo "==> Instalando pacotes oficiais (${#FINAL_PACMAN[@]}): ${FINAL_PACMAN[*]}"
+    sudo pacman -S --needed --noconfirm "${FINAL_PACMAN[@]}" || {
+        echo "Aviso: Alguns pacotes oficiais apresentaram aviso na instalação."
+    }
+fi
+
+# Instalar pacotes AUR
+if [ ${#FINAL_AUR[@]} -gt 0 ]; then
+    if ! command -v yay >/dev/null 2>&1; then
+        echo "==> yay não encontrado. Compilando yay-bin a partir do AUR..."
+        sudo pacman -S --needed --noconfirm git base-devel
+        BUILD_DIR=$(mktemp -d)
+        git clone https://aur.archlinux.org/yay-bin.git "$BUILD_DIR/yay-bin"
+        (cd "$BUILD_DIR/yay-bin" && makepkg -si --noconfirm)
+        rm -rf "$BUILD_DIR"
+    fi
+    echo "==> Instalando pacotes do AUR (${#FINAL_AUR[@]}): ${FINAL_AUR[*]}"
+    yay -S --needed --noconfirm "${FINAL_AUR[@]}" || {
+        echo "Aviso: Alguns pacotes do AUR apresentaram aviso na instalação."
+    }
+fi
+
+echo "==> [chezmoi] Instalação de pacotes concluída com sucesso!"
 {{- end -}}

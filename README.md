@@ -20,9 +20,44 @@ Abra o PowerShell como Administrador ou usuário comum:
 
 ---
 
+## 📋 Menu Interativo de Seleção de Pacotes
+
+Ao rodar a instalação em um computador recém-formatado com **Arch Linux**, o script apresentará um menu interativo no terminal:
+
+```text
+==========================================================================
+ 📦 Menu Interativo de Pacotes - Arch Linux
+==========================================================================
+ Selecione os pacotes que deseja instalar nesta máquina:
+
+   [ 1] [✓] [Oficial] git
+   [ 2] [✓] [Oficial] kitty
+   [ 3] [✓] [Oficial] hyprland
+   [ 4] [✓] [Oficial] quickshell
+   [ 5] [✓] [AUR    ] vicinae-bin
+   [ 6] [✓] [AUR    ] bitwarden
+   [ 7] [✓] [AUR    ] spotify-launcher
+   ...
+==========================================================================
+ [ENTER]          - Confirmar e instalar os pacotes marcados [✓]
+ [números]        - Digite os números para marcar/desmarcar (ex: 6 7)
+ [t]              - Inverter tudo (marcar todos / desmarcar todos)
+ [e]              - Abrir lista no editor (nano) para apagar manualmente
+ [p]              - Pular instalação de pacotes (continuar só com dotfiles)
+==========================================================================
+```
+
+### O que você pode fazer no menu:
+- **Pressionar ENTER**: Instala todos os pacotes recomendados imediatamente.
+- **Digitar números (ex: `6 7`)**: Desmarca os itens escolhidos (ex: remove Bitwarden e Spotify).
+- **Digitar `e`**: Abre a lista no `nano` para você apagar as linhas que não quiser instalar.
+- **Digitar `p`**: Pula a instalação de pacotes por completo.
+
+---
+
 ## 📦 Estrutura de Pacotes por Sistema Operacional
 
-Os pacotes são gerenciados de forma centralizada e declarativa no arquivo [`.chezmoidata/packages.yaml`](.chezmoidata/packages.yaml):
+Os pacotes são gerenciados centralmente no arquivo [`.chezmoidata/packages.yaml`](.chezmoidata/packages.yaml):
 
 | Sistema | Gerenciador | Pacotes Instalados |
 |---|---|---|
@@ -44,13 +79,7 @@ O chezmoi utiliza templates (`.tmpl`) para adaptar configurações de acordo com
 | **Touchpad (`input.lua`)** | Scroll e gestos desabilitados | `natural_scroll = true` e `workspace_swipe = true` |
 | **Launcher / Menu** | Vicinae (`vicinae toggle` e `vicinae dmenu`) | Vicinae (`vicinae toggle` e `vicinae dmenu`) |
 | **Pacotes extras (Arch)** | Pacotes padrão | `brightnessctl` (controle de brilho de tela) |
-| **Quickshell** | Clona repositório oficial | Clona repositório oficial |
-
-Para alternar o tipo de dispositivo manualmente:
-```bash
-chezmoi init --promptChoice "chassisType=laptop"
-chezmoi apply
-```
+| **Quickshell** | Clona repositório oficial (se habilitado) | Clona repositório oficial (se habilitado) |
 
 ---
 

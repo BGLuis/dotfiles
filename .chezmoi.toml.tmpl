@@ -1,5 +1,7 @@
 {{- $choices := list "desktop" "laptop" -}}
 {{- $chassisType := promptChoiceOnce . "chassisType" "Qual o tipo deste dispositivo? (desktop/laptop)" $choices "desktop" -}}
+{{- $setupQuickshell := promptBoolOnce . "setupQuickshell" "Deseja clonar e configurar o Quickshell (barra/widgets) nesta máquina?" true -}}
 
 [data]
     chassisType = {{ $chassisType | quote }}
+    setupQuickshell = {{ $setupQuickshell }}

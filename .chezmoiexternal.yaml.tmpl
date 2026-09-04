@@ -1,4 +1,8 @@
-{{- if and (eq .chezmoi.os "linux") (hasKey .chezmoi "osRelease") (eq .chezmoi.osRelease.id "arch") }}
+{{- $setupQuickshell := true -}}
+{{- if hasKey . "setupQuickshell" -}}
+{{-   $setupQuickshell = .setupQuickshell -}}
+{{- end -}}
+{{- if and (eq .chezmoi.os "linux") (hasKey .chezmoi "osRelease") (eq .chezmoi.osRelease.id "arch") $setupQuickshell }}
 .config/quickshell:
   type: git-repo
   url: "https://github.com/BGLuis/quickshell.git"
