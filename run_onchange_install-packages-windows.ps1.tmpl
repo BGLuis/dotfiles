@@ -1,0 +1,18 @@
+{{- if eq .chezmoi.os "windows" -}}
+# hash: {{ include ".chezmoidata/packages.yaml" | sha256sum }}
+
+Write-Host "==> [chezmoi] Instalando pacotes no Windows via Winget..."
+
+$packages = @(
+{{- range .packages.windows.winget }}
+    {{ . | quote }},
+{{- end }}
+)
+
+foreach ($pkg in $packages) {
+    Write-Host "Instalando $pkg..."
+    winget install --id $pkg -e --accept-source-agreements --accept-package-agreements --silent
+}
+
+Write-Host "==> [chezmoi] Instalação no Windows concluída!"
+{{- end -}}

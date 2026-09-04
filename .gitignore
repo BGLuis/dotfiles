@@ -1,5 +1,4 @@
 .chezmoi.toml
-.chezmoidata/
 **/*~
 **/*.bak
 **/*.zwc

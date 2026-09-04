@@ -1,0 +1,76 @@
+packages:
+  # Pacotes para Arch Linux (pacman & yay)
+  arch:
+    pacman:
+      - git
+      - git-lfs
+      - curl
+      - starship
+      - nano
+      - kitty
+      - hyprland
+      - hypridle
+      - hyprlock
+      - hyprpaper
+      - hyprsunset
+      - xdg-desktop-portal-hyprland
+      - xdg-desktop-portal-gtk
+      - polkit-kde-agent
+      - qt5-wayland
+      - qt6-wayland
+      - qt6ct
+      - quickshell
+      - wofi
+      - btop
+      - lazygit
+      - grim
+      - slurp
+      - cliphist
+      - wl-clipboard
+      - ttf-jetbrains-mono-nerd
+      - tailscale
+    aur:
+      - bitwarden
+      - spotify-launcher
+    laptop:
+      - brightnessctl
+
+  # Pacotes para Debian/Ubuntu (apt)
+  debian:
+    apt:
+      - git
+      - git-lfs
+      - curl
+      - nano
+      - kitty
+      - btop
+    # Instalações adicionais via snap/scripts (opcionais)
+    snaps:
+      - starship --classic
+      - bitwarden
+      - spotify
+
+  # Pacotes para macOS (Homebrew)
+  darwin:
+    brews:
+      - git
+      - git-lfs
+      - starship
+      - nano
+      - btop
+      - lazygit
+    casks:
+      - kitty
+      - bitwarden
+      - tailscale
+      - spotify
+
+  # Pacotes para Windows (Winget)
+  windows:
+    winget:
+      - Git.Git
+      - Starship.Starship
+      - Bitwarden.Bitwarden
+      - Tailscale.Tailscale
+      - Spotify.Spotify
+      - GNU.Nano

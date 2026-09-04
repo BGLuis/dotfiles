@@ -1,7 +1,6 @@
 README.md
 LICENSE
 .git*
-packages.txt
 **/*~
 **/*.bak
 **/*.zwc
@@ -9,3 +8,9 @@ packages.txt
 .config/zsh/RELATORIO.md
 .config/hypr/backup_conf/**
 .config/hypr/hyprlock/Untitled-1.md
+
+{{- if ne .chezmoi.os "linux" }}
+.config/hypr/**
+.config/wofi/**
+.config/quickshell/**
+{{- end }}

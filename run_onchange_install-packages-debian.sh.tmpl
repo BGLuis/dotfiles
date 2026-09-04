@@ -1,0 +1,26 @@
+{{- if and (eq .chezmoi.os "linux") (hasKey .chezmoi "osRelease") (or (eq .chezmoi.osRelease.id "ubuntu") (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.id "pop")) -}}
+#!/bin/bash
+set -euo pipefail
+
+# hash: {{ include ".chezmoidata/packages.yaml" | sha256sum }}
+
+echo "==> [chezmoi] Instalando pacotes no Debian/Ubuntu..."
+sudo apt-get update
+
+APT_PKGS=(
+{{- range .packages.debian.apt }}
+  {{ . | quote }}
+{{- end }}
+)
+
+sudo apt-get install -y "${APT_PKGS[@]}"
+
+# Instala snaps se disponíveis
+if command -v snap >/dev/null 2>&1; then
+{{- range .packages.debian.snaps }}
+    sudo snap install {{ . }} || true
+{{- end }}
+fi
+
+echo "==> [chezmoi] Instalação no Debian/Ubuntu concluída!"
+{{- end -}}

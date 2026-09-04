@@ -1,39 +1,51 @@
-# ❄️ Dotfiles & Sistema (Arch Linux + Hyprland + Quickshell)
+# ❄️ Dotfiles & Sistema Multi-OS (Arch Linux, macOS, Windows)
 
-Gerenciamento de configurações e automação pós-formatação para **Desktop** e **Notebook**, gerenciado via [chezmoi](https://www.chezmoi.io/).
+Gerenciamento unificado de configurações e provisionamento automatizado de pacotes pós-formatação para **Desktop** e **Notebook**, gerenciado via [chezmoi](https://www.chezmoi.io/).
 
 ---
 
-## 🚀 Como restaurar após formatar (Instalação em 1 comando)
+## 🚀 Como restaurar após formatar
 
-Após instalar o Arch Linux em um novo PC ou notebook, abra o terminal e execute:
-
+### 🐧 No Linux (Arch, Ubuntu, Debian) e 🍏 macOS
+Abra o terminal e execute:
 ```bash
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply BGLuis
 ```
 
-### O que esse comando faz automaticamente:
-1. **Detecta o hardware**: Pergunta se a máquina é um `desktop` ou `laptop`.
-2. **Instala os pacotes**: Executa `run_onchange_install-packages.sh` para instalar Hyprland, Kitty, Quickshell, Zsh, Starship, fontes e utilitários via `pacman` (e compila o `yay` se necessário).
-3. **Clona o Quickshell**: Baixa o repositório do Quickshell ([BGLuis/quickshell](https://github.com/BGLuis/quickshell)) direto em `~/.config/quickshell`.
-4. **Aplica as configurações**:
-   - **Hyprland**: Configura os 3 monitores no Desktop ou a tela `eDP-1` com gestos de swipe no Notebook.
-   - **Terminal & Shell**: Kitty, Starship e Zsh (com aliases, bindings e plugins configurados).
-   - **Utilitários**: Wofi, Btop e Lazygit.
+### 🪟 No Windows (PowerShell)
+Abra o PowerShell como Administrador ou usuário comum:
+```powershell
+& {irm 'https://get.chezmoi.io/ps1' | iex} ; chezmoi init --apply BGLuis
+```
+
+---
+
+## 📦 Estrutura de Pacotes por Sistema Operacional
+
+Os pacotes são gerenciados de forma centralizada e declarativa no arquivo [`.chezmoidata/packages.yaml`](.chezmoidata/packages.yaml):
+
+| Sistema | Gerenciador | Pacotes Instalados |
+|---|---|---|
+| **Todos os Sistemas** | Nativo do SO | Git, Starship, Bitwarden, Tailscale, Spotify |
+| **Linux (Geral)** | Apt / Pacman | Kitty, Nano |
+| **Arch Linux** | Pacman + Yay (AUR) | Quickshell, Hyprland, Hypridle, Hyprlock, Wofi, Btop, Lazygit, Grim/Slurp, Wayland tools |
+| **macOS** | Homebrew | Git, Starship, Nano, Btop, Lazygit, Kitty, Bitwarden, Tailscale, Spotify |
+| **Windows** | Winget | Git, Starship, Bitwarden, Tailscale, Spotify, Nano |
 
 ---
 
 ## 🖥️ Suporte Multi-Máquina (Desktop vs Notebook)
 
-O chezmoi utiliza templates (`.tmpl`) para ajustar as configurações conforme o tipo de computador:
+O chezmoi utiliza templates (`.tmpl`) para adaptar configurações de acordo com o tipo de computador:
 
 | Configuração | Desktop | Notebook |
 |---|---|---|
 | **Monitores (`monitors.lua`)** | 3 telas (Odyssey G3 vertical, Super Frame 1440p, HDMI secundário) | Tela padrão `eDP-1` automática |
-| **Touchpad (`input.lua`)** | Scroll e swipe desabilitados | `natural_scroll = true` e `workspace_swipe = true` |
+| **Touchpad (`input.lua`)** | Scroll e gestos desabilitados | `natural_scroll = true` e `workspace_swipe = true` |
+| **Pacotes extras (Arch)** | Pacotes padrão | `brightnessctl` (controle de brilho de tela) |
 | **Quickshell** | Clona repositório oficial | Clona repositório oficial |
 
-Caso precise alterar o tipo de máquina em um sistema já configurado:
+Para alternar o tipo de dispositivo manualmente:
 ```bash
 chezmoi init --promptChoice "chassisType=laptop"
 chezmoi apply
@@ -44,20 +56,20 @@ chezmoi apply
 ## 🛠️ Comandos Úteis no Dia a Dia
 
 Os arquivos deste repositório estão localizados em:
-- Pasta de trabalho: `~/Documents/hand-on/dotfiles` (linkada em `~/.local/share/chezmoi`)
+- `~/Documents/hand-on/dotfiles` (linkado para `~/.local/share/chezmoi`)
 
 | Comando | Descrição |
 |---|---|
 | `chezmoi status` | Mostra quais arquivos locais estão diferentes do repositório |
 | `chezmoi diff` | Mostra o diff linha por linha das alterações |
 | `chezmoi apply` | Aplica as configurações do repositório no seu sistema (`~`) |
-| `chezmoi add ~/.config/<app>` | Adiciona uma nova pasta/arquivo de configuração aos dotfiles |
+| `chezmoi add ~/.config/<app>` | Adiciona uma nova pasta ou arquivo aos dotfiles |
 | `chezmoi cd` | Entra diretamente na pasta dos dotfiles no terminal |
 
 ### Para enviar alterações para o GitHub:
 ```bash
 cd ~/Documents/hand-on/dotfiles
 git add .
-git commit -m "feat: atualiza configuracao do hyprland"
+git commit -m "feat: atualiza configuracao"
 git push origin main
 ```

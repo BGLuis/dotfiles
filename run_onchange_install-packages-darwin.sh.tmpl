@@ -1,0 +1,24 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+set -euo pipefail
+
+# hash: {{ include ".chezmoidata/packages.yaml" | sha256sum }}
+
+echo "==> [chezmoi] Instalando pacotes no macOS via Homebrew..."
+
+if ! command -v brew >/dev/null 2>&1; then
+    echo "==> Homebrew não encontrado. Instalando Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+
+brew bundle --file=/dev/stdin <<EOF
+{{ range .packages.darwin.brews -}}
+brew {{ . | quote }}
+{{ end -}}
+{{ range .packages.darwin.casks -}}
+cask {{ . | quote }}
+{{ end -}}
+EOF
+
+echo "==> [chezmoi] Instalação no macOS concluída!"
+{{- end -}}

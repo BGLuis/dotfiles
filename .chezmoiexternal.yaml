@@ -1,4 +1,0 @@
-.config/quickshell:
-  type: git-repo
-  url: "https://github.com/BGLuis/quickshell.git"
-  refreshPeriod: 168h

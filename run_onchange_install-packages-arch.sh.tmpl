@@ -1,0 +1,47 @@
+{{- if and (eq .chezmoi.os "linux") (hasKey .chezmoi "osRelease") (eq .chezmoi.osRelease.id "arch") -}}
+#!/bin/bash
+set -euo pipefail
+
+# hash: {{ include ".chezmoidata/packages.yaml" | sha256sum }}
+
+echo "==> [chezmoi] Instalando pacotes no Arch Linux..."
+
+PACMAN_PKGS=(
+{{- range .packages.arch.pacman }}
+  {{ . | quote }}
+{{- end }}
+{{- if and (hasKey . "chassisType") (eq .chassisType "laptop") }}
+{{-   range .packages.arch.laptop }}
+  {{ . | quote }}
+{{-   end }}
+{{- end }}
+)
+
+if command -v pacman >/dev/null 2>&1; then
+    echo "==> Instalando pacotes oficiais via pacman..."
+    sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}" || true
+fi
+
+# Instala yay se necessário
+if ! command -v yay >/dev/null 2>&1; then
+    echo "==> yay não encontrado. Compilando yay-bin a partir do AUR..."
+    sudo pacman -S --needed --noconfirm git base-devel
+    BUILD_DIR=$(mktemp -d)
+    git clone https://aur.archlinux.org/yay-bin.git "$BUILD_DIR/yay-bin"
+    (cd "$BUILD_DIR/yay-bin" && makepkg -si --noconfirm)
+    rm -rf "$BUILD_DIR"
+fi
+
+AUR_PKGS=(
+{{- range .packages.arch.aur }}
+  {{ . | quote }}
+{{- end }}
+)
+
+if [ ${#AUR_PKGS[@]} -gt 0 ]; then
+    echo "==> Instalando pacotes do AUR via yay..."
+    yay -S --needed --noconfirm "${AUR_PKGS[@]}" || true
+fi
+
+echo "==> [chezmoi] Instalação no Arch concluída!"
+{{- end -}}
