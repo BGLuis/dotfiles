@@ -20,7 +20,6 @@ packages:
       - qt6-wayland
       - qt6ct
       - quickshell
-      - wofi
       - btop
       - lazygit
       - grim
@@ -30,6 +29,7 @@ packages:
       - ttf-jetbrains-mono-nerd
       - tailscale
     aur:
+      - vicinae-bin
       - bitwarden
       - spotify-launcher
     laptop:

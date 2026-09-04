@@ -28,7 +28,7 @@ Os pacotes são gerenciados de forma centralizada e declarativa no arquivo [`.ch
 |---|---|---|
 | **Todos os Sistemas** | Nativo do SO | Git, Starship, Bitwarden, Tailscale, Spotify |
 | **Linux (Geral)** | Apt / Pacman | Kitty, Nano |
-| **Arch Linux** | Pacman + Yay (AUR) | Quickshell, Hyprland, Hypridle, Hyprlock, Wofi, Btop, Lazygit, Grim/Slurp, Wayland tools |
+| **Arch Linux** | Pacman + Yay (AUR) | Quickshell, Hyprland, Hypridle, Hyprlock, Vicinae, Btop, Lazygit, Grim/Slurp, Wayland tools |
 | **macOS** | Homebrew | Git, Starship, Nano, Btop, Lazygit, Kitty, Bitwarden, Tailscale, Spotify |
 | **Windows** | Winget | Git, Starship, Bitwarden, Tailscale, Spotify, Nano |
 
@@ -42,6 +42,7 @@ O chezmoi utiliza templates (`.tmpl`) para adaptar configurações de acordo com
 |---|---|---|
 | **Monitores (`monitors.lua`)** | 3 telas (Odyssey G3 vertical, Super Frame 1440p, HDMI secundário) | Tela padrão `eDP-1` automática |
 | **Touchpad (`input.lua`)** | Scroll e gestos desabilitados | `natural_scroll = true` e `workspace_swipe = true` |
+| **Launcher / Menu** | Vicinae (`vicinae toggle` e `vicinae dmenu`) | Vicinae (`vicinae toggle` e `vicinae dmenu`) |
 | **Pacotes extras (Arch)** | Pacotes padrão | `brightnessctl` (controle de brilho de tela) |
 | **Quickshell** | Clona repositório oficial | Clona repositório oficial |
 

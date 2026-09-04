@@ -60,7 +60,7 @@ hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("quickshell -c widget ipc call shell 
 hl.bind(mainMod .. " + SHIFT + L", hl.dsp.exec_cmd("quickshell -c widget ipc call shell lock"))
 
 -- Cliphist
-hl.bind(mainMod .. " + CTRL + V", hl.dsp.exec_cmd("cliphist list | wofi --dmenu | cliphist decode | wl-copy"))
+hl.bind(mainMod .. " + CTRL + V", hl.dsp.exec_cmd("cliphist list | vicinae dmenu | cliphist decode | wl-copy"))
 
 -- Color picker
 hl.bind(mainMod .. " + O", hl.dsp.global("quickshell:ColorPicker"))
