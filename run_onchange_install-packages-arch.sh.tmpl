@@ -1,4 +1,8 @@
 {{- if and (eq .chezmoi.os "linux") (hasKey .chezmoi "osRelease") (eq .chezmoi.osRelease.id "arch") -}}
+{{- $chassisType := "desktop" -}}
+{{- if hasKey . "chassisType" -}}
+{{-   $chassisType = .chassisType -}}
+{{- end -}}
 #!/bin/bash
 set -euo pipefail
 
@@ -14,7 +18,7 @@ PACMAN_ALL=(
 {{- range .packages.arch.core.pacman }}
   {{ . | quote }}
 {{- end }}
-{{- if ne .chassisType "headless" }}
+{{- if ne $chassisType "headless" }}
 {{-   range .packages.arch.gui.pacman }}
   {{ . | quote }}
 {{-   end }}
@@ -22,7 +26,7 @@ PACMAN_ALL=(
 )
 
 AUR_ALL=(
-{{- if ne .chassisType "headless" }}
+{{- if ne $chassisType "headless" }}
 {{-   range .packages.arch.gui.aur }}
   {{ . | quote }}
 {{-   end }}
@@ -30,7 +34,7 @@ AUR_ALL=(
 )
 
 LAPTOP_ALL=(
-{{- if and (hasKey . "chassisType") (eq .chassisType "laptop") }}
+{{- if eq $chassisType "laptop" }}
 {{-   range .packages.arch.laptop }}
   {{ . | quote }}
 {{-   end }}
@@ -64,9 +68,7 @@ done
 
 # Verificar se há terminal interativo disponível
 INTERACTIVE=0
-if [ -t 0 ] || [ -e /dev/tty ]; then
-    INTERACTIVE=1
-fi
+[ -t 0 ] && INTERACTIVE=1
 
 if [ "$INTERACTIVE" -eq 1 ]; then
     while true; do

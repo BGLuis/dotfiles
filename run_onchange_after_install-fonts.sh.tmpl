@@ -1,4 +1,8 @@
-{{- if and (eq .chezmoi.os "linux") (ne .chassisType "headless") -}}
+{{- $chassisType := "desktop" -}}
+{{- if hasKey . "chassisType" -}}
+{{-   $chassisType = .chassisType -}}
+{{- end -}}
+{{- if and (eq .chezmoi.os "linux") (ne $chassisType "headless") -}}
 #!/bin/bash
 set -euo pipefail
 

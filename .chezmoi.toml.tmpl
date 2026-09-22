@@ -1,9 +1,24 @@
-{{- /* Detecta automaticamente se a máquina não tem GUI: sem monitor conectado e sem target gráfico do systemd */ -}}
+{{- /* Detecta automaticamente se a máquina não tem GUI: nenhuma saída de vídeo REAL conectada.
+       Ignora GPUs virtuais de hypervisor (qxl, virtio_gpu, cirrus, vboxvideo, vmwgfx, hyperv_drm),
+       que costumam reportar "connected" mesmo em VPS/VMs sem monitor de verdade. */ -}}
 {{- $isHeadlessDetected := false -}}
 {{- if eq .chezmoi.os "linux" -}}
-{{-   $target := output "sh" "-c" "systemctl get-default 2>/dev/null || true" | trim -}}
-{{-   $connected := output "sh" "-c" "grep -l ^connected /sys/class/drm/card*-*/status 2>/dev/null | head -n1 || true" | trim -}}
-{{-   if and (ne $target "graphical.target") (eq $connected "") -}}
+{{-   $connected := output "sh" "-c" `
+for f in /sys/class/drm/card*-*/status; do
+  [ -f "$f" ] || continue
+  st=$(cat "$f" 2>/dev/null)
+  [ "$st" = "connected" ] || continue
+  card=$(basename "$(dirname "$f")" | cut -d- -f1)
+  drv=$(basename "$(readlink -f "/sys/class/drm/$card/device/driver" 2>/dev/null)" 2>/dev/null)
+  case "$drv" in
+    qxl|virtio_gpu|cirrus|vboxvideo|vmwgfx|hyperv_drm|bochs*) continue ;;
+  esac
+  echo "$f"
+  break
+done
+true
+` | trim -}}
+{{-   if eq $connected "" -}}
 {{-     $isHeadlessDetected = true -}}
 {{-   end -}}
 {{- end -}}

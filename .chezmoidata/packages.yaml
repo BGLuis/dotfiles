@@ -19,6 +19,8 @@ packages:
         - eza
         - lsd
         - zoxide
+        - jq
+        - ripgrep
     # Pacotes de ambiente gráfico: pulados automaticamente quando chassisType = headless
     gui:
       pacman:
@@ -26,7 +28,7 @@ packages:
         - hyprland
         - hypridle
         - hyprlock
-        - hyprpaper
+        - awww
         - hyprsunset
         - xdg-desktop-portal-hyprland
         - xdg-desktop-portal-gtk
@@ -41,34 +43,42 @@ packages:
         - wl-clipboard
         - solaar
         - dolphin
+        - playerctl
+        - vivaldi
+        - bitwarden
+        - spotify-launcher
         - ttf-jetbrains-mono-nerd
         - ttf-material-symbols-variable
         - discord
       aur:
         - vicinae-bin
-        - bitwarden
         - visual-studio-code-bin
-        - spotify-launcher
         - ttf-rubik-vf
+        - bibata-cursor-theme
     laptop:
       - brightnessctl
 
   # Pacotes para Debian/Ubuntu (apt)
   debian:
-    apt:
-      - git
-      - git-lfs
-      - curl
-      - nano
-      - kitty
-      - btop
-    # Instalações adicionais via snap/scripts (opcionais)
-    snaps:
-      - starship --classic
-      - bitwarden
-      - spotify
-      - discord
-      - code --classic
+    # Essenciais de terminal: instalados em qualquer máquina, incluindo servidores headless
+    core:
+      apt:
+        - git
+        - git-lfs
+        - curl
+        - nano
+        - btop
+      snaps:
+        - starship --classic
+    # Pacotes de ambiente gráfico: pulados automaticamente quando chassisType = headless
+    gui:
+      apt:
+        - kitty
+      snaps:
+        - bitwarden
+        - spotify
+        - discord
+        - code --classic
 
   # Pacotes para macOS (Homebrew)
   darwin:

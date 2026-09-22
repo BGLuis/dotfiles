@@ -1,6 +1,8 @@
 export EDITOR=nano
 export VISUAL="$EDITOR"
-export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
+if [[ -S "$HOME/.bitwarden-ssh-agent.sock" ]]; then
+  export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
+fi
 
 export PATH="$HOME/.local/bin:$PATH"
 

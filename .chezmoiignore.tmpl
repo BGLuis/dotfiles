@@ -10,13 +10,18 @@ LICENSE
 .config/hypr/backup_conf/**
 .config/hypr/hyprlock/Untitled-1.md
 
+{{- $chassisType := "desktop" -}}
+{{- if hasKey . "chassisType" -}}
+{{-   $chassisType = .chassisType -}}
+{{- end -}}
+
 {{- if ne .chezmoi.os "linux" }}
 .config/hypr/**
 .config/vicinae/**
 .config/quickshell/**
 {{- end }}
 
-{{- if eq .chassisType "headless" }}
+{{- if eq $chassisType "headless" }}
 .config/hypr/**
 .config/kitty/**
 .config/vicinae/**
