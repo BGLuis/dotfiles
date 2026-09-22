@@ -29,7 +29,7 @@ adb-waydroid() {
 
 # Criar diretório e entrar diretamente
 mkcd() {
-  [[ -z $1 ]] && { print -u2 "uso: mkcd <diretório>"; return 1 }
+  [[ -z $1 ]] && { print -u2 "uso: mkcd <diretório>"; return 1; }
   mkdir -p -- "$@" && cd -- "${@[-1]}"
 }
 
@@ -47,7 +47,7 @@ dsh() {
 
 # Escolher script do package.json via fzf
 nrs() {
-  [[ -f package.json ]] || { print -u2 "nrs: package.json não encontrado no diretório atual"; return 1 }
+  [[ -f package.json ]] || { print -u2 "nrs: package.json não encontrado no diretório atual"; return 1; }
   local s
   s=$(jq -r '.scripts | keys[]' package.json 2>/dev/null | fzf --no-preview --height 40%)
   [[ -n $s ]] && npm run "$s"
@@ -55,7 +55,7 @@ nrs() {
 
 # Extrair arquivos compactados de qualquer formato comum
 extract() {
-  [[ -f $1 ]] || { print -u2 "extract: '$1' não é um arquivo válido"; return 1 }
+  [[ -f $1 ]] || { print -u2 "extract: '$1' não é um arquivo válido"; return 1; }
   case "$1" in
     *.tar.bz2|*.tbz2) tar xjf   -- "$1" ;;
     *.tar.gz|*.tgz)   tar xzf   -- "$1" ;;

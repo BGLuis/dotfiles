@@ -1,3 +1,7 @@
+{{- $chassisType := "desktop" -}}
+{{- if hasKey . "chassisType" -}}
+{{-   $chassisType = .chassisType -}}
+{{- end -}}
 hl.on("hyprland.start", function ()
     -- Autostart necessary processes
     hl.exec_cmd("solaar")
@@ -5,12 +9,16 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
     hl.exec_cmd("/usr/lib/pam_kwallet_init")
     hl.exec_cmd("awww-daemon")
-    
+
     -- Set a wallpaper per monitor. Adjust image paths as needed.
+{{- if eq $chassisType "laptop" }}
+    hl.exec_cmd("sleep 1 && awww img $HOME/Imagens/wallpaper/Japanese-Red-Autumn.jpg --outputs eDP-1")
+{{- else }}
     hl.exec_cmd("sleep 1 && awww img $HOME/Imagens/wallpaper/leaves.jpg --outputs DP-1")
     hl.exec_cmd("sleep 1 && awww img $HOME/Imagens/wallpaper/Island05.png --outputs HDMI-A-1")
     hl.exec_cmd("sleep 1 && awww img $HOME/Imagens/wallpaper/Japanese-Red-Autumn.jpg --outputs HDMI-A-2")
-    
+{{- end }}
+
     hl.exec_cmd("hypridle")
     -- hyprsunset é gerenciado via systemd user service (systemctl --user enable hyprsunset.service)
     -- Não iniciar manualmente aqui para evitar instâncias duplicadas
