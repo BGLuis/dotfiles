@@ -1,3 +1,7 @@
+# Locale UTF-8 consistente (evita quebra de renderização e duplicação de caracteres via SSH)
+export LANG="${LANG:-C.UTF-8}"
+export LC_ALL="C.UTF-8"
+
 export EDITOR=nano
 export VISUAL="$EDITOR"
 if [[ -S "$HOME/.bitwarden-ssh-agent.sock" ]]; then

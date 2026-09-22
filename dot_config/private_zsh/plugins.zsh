@@ -14,8 +14,10 @@ znap eval starship 'starship init zsh --print-full-init'
 znap eval zoxide 'zoxide init zsh'
 znap prompt
 
+# FZF keybindings e completion
+znap eval fzf 'fzf --zsh'
+
 # Plugins de funcionalidade
-znap source Aloxaf/fzf-tab
 znap source zsh-users/zsh-completions
 znap source djui/alias-tips
 znap source ohmyzsh/ohmyzsh plugins/bgnotify
@@ -27,7 +29,8 @@ znap source ohmyzsh/ohmyzsh lib/key-bindings.zsh
 znap source ohmyzsh/ohmyzsh lib/completion.zsh
 znap source greymd/docker-zsh-completion
 
-znap eval fzf 'fzf --zsh'
+# fzf-tab deve vir DEPOIS de compinit e fzf, mas ANTES dos plugins visuais
+znap source Aloxaf/fzf-tab
 
 # Command-not-found (Arch Linux)
 if [ -f /usr/share/doc/pkgfile/command-not-found.zsh ]; then

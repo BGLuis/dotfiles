@@ -7,6 +7,9 @@ SAVEHIST=100000
 setopt autocd extendedglob
 stty -ixon 2>/dev/null # Libera Ctrl+S e Ctrl+Q no terminal interativo
 
+# Evita quebra de linha do RPROMPT no Starship e glitches de redimensionamento do cursor
+export ZLE_RPROMPT_INDENT=0
+
 # Autocompletar - Cores nos resultados
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 

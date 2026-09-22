@@ -21,6 +21,7 @@ packages:
         - zoxide
         - jq
         - ripgrep
+        - kitty-terminfo
     # Pacotes de ambiente gráfico: pulados automaticamente quando chassisType = headless
     gui:
       pacman:
@@ -68,6 +69,7 @@ packages:
         - curl
         - nano
         - btop
+        - kitty-terminfo
       snaps:
         - starship --classic
     # Pacotes de ambiente gráfico: pulados automaticamente quando chassisType = headless
