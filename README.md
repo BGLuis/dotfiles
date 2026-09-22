@@ -6,6 +6,8 @@ Gerenciamento unificado de configurações e provisionamento automatizado de pac
 
 ## 🚀 Como restaurar após formatar
 
+> ⚠️ **Antes de começar**: o Quickshell é clonado a partir de um repositório **privado** (`git@github.com:BGLuis/quickshell.git`). Garanta que sua chave SSH já esteja associada à sua conta do GitHub (ou rode `gh auth login`) **antes** do primeiro `chezmoi apply`, caso contrário o passo do Quickshell falhará com `Permission denied (publickey)`.
+
 ### 🐧 No Linux (Arch, Ubuntu, Debian) e 🍏 macOS
 Abra o terminal e execute:
 ```bash
@@ -17,6 +19,17 @@ Abra o PowerShell como Administrador ou usuário comum:
 ```powershell
 & {irm 'https://get.chezmoi.io/ps1' | iex} ; chezmoi init --apply BGLuis
 ```
+
+---
+
+## 🖧 Servidores Headless (sem GUI)
+
+O `chezmoi init` detecta automaticamente se a máquina **não tem monitor conectado** (checando `/sys/class/drm/*/status`) e se o `systemd` não está no `graphical.target`. Se for o caso, o tipo de dispositivo já vem pré-selecionado como `headless` — basta apertar **ENTER** na pergunta "Qual o tipo deste dispositivo?" para confirmar (ou escolher outro tipo manualmente se a detecção errar).
+
+No modo `headless`:
+- **Pulado por completo**: Hyprland, Hypridle, Hyprlock, Hyprpaper, Quickshell, Vicinae, Kitty, apps desktop (Discord, VS Code, Spotify, Bitwarden, Solaar, Dolphin) e o download de fontes de interface (Rubik/Material Symbols).
+- **Instalado normalmente**: Git, Zsh (com todos os plugins do `znap`, `fzf`, `eza`, `lsd`, `zoxide` etc.), Starship, Btop, Lazygit, Tailscale, Nano — tudo que faz sentido usar via SSH.
+- A pergunta sobre clonar o Quickshell nem é feita.
 
 ---
 
@@ -87,13 +100,13 @@ O repositório gerencia automaticamente as fontes necessárias para o terminal e
 
 O chezmoi utiliza templates (`.tmpl`) para adaptar configurações de acordo com o tipo de computador:
 
-| Configuração | Desktop | Notebook |
-|---|---|---|
-| **Monitores (`monitors.lua`)** | 3 telas (Odyssey G3 vertical, Super Frame 1440p, HDMI secundário) | Tela padrão `eDP-1` automática |
-| **Touchpad (`input.lua`)** | Scroll e gestos desabilitados | `natural_scroll = true` e `workspace_swipe = true` |
-| **Launcher / Menu** | Vicinae (`vicinae toggle` e `vicinae dmenu`) | Vicinae (`vicinae toggle` e `vicinae dmenu`) |
-| **Pacotes extras (Arch)** | Pacotes padrão | `brightnessctl` (controle de brilho de tela) |
-| **Quickshell** | Clona repositório oficial (se habilitado) | Clona repositório oficial (se habilitado) |
+| Configuração | Desktop | Notebook | Headless |
+|---|---|---|---|
+| **Monitores (`monitors.lua`)** | 3 telas (Odyssey G3 vertical, Super Frame 1440p, HDMI secundário) | Tela padrão `eDP-1` automática | N/A (todo `dot_config/hypr` é ignorado) |
+| **Touchpad (`input.lua`)** | Scroll e gestos desabilitados | `natural_scroll = true` e `workspace_swipe = true` | N/A |
+| **Launcher / Menu** | Vicinae (`vicinae toggle` e `vicinae dmenu`) | Vicinae (`vicinae toggle` e `vicinae dmenu`) | N/A |
+| **Pacotes extras (Arch)** | Pacotes padrão | `brightnessctl` (controle de brilho de tela) | Somente pacotes `core` (sem GUI) |
+| **Quickshell** | Clona repositório oficial (se habilitado) | Clona repositório oficial (se habilitado) | Nunca clonado |
 
 ---
 

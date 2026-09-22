@@ -7,9 +7,9 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("awww-daemon")
     
     -- Set a wallpaper per monitor. Adjust image paths as needed.
-    hl.exec_cmd("sleep 1 && awww img /home/luis/Imagens/wallpaper/leaves.jpg --outputs DP-1")
-    hl.exec_cmd("sleep 1 && awww img /home/luis/Imagens/wallpaper/Island05.png --outputs HDMI-A-1")
-    hl.exec_cmd("sleep 1 && awww img /home/luis/Imagens/wallpaper/Japanese-Red-Autumn.jpg --outputs HDMI-A-2")
+    hl.exec_cmd("sleep 1 && awww img $HOME/Imagens/wallpaper/leaves.jpg --outputs DP-1")
+    hl.exec_cmd("sleep 1 && awww img $HOME/Imagens/wallpaper/Island05.png --outputs HDMI-A-1")
+    hl.exec_cmd("sleep 1 && awww img $HOME/Imagens/wallpaper/Japanese-Red-Autumn.jpg --outputs HDMI-A-2")
     
     hl.exec_cmd("hypridle")
     -- hyprsunset é gerenciado via systemd user service (systemctl --user enable hyprsunset.service)
@@ -29,7 +29,7 @@ hl.on("hyprland.start", function ()
         hl.exec_cmd("bitwarden-desktop %U", { workspace = "1 silent" })
         hl.exec_cmd("discord", { workspace = "2 silent" })
         hl.exec_cmd("vicinae server")
-        hl.exec_cmd("/home/luis/.config/hypr/scripts/sunset-startup-check.sh")
+        hl.exec_cmd("$HOME/.config/hypr/scripts/sunset-startup-check.sh")
     end, { timeout = 3000, type = "oneshot" })
     
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")

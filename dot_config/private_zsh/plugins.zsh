@@ -3,6 +3,10 @@ mkdir -p ~/.local/share/zsh-snap/completions
 mkdir -p ~/.cache/zsh-snap
 
 ZSH_PLUGINS="$HOME/.local/share/zsh-plugins"
+if [[ ! -f "$ZSH_PLUGINS/zsh-snap/znap.zsh" ]]; then
+  mkdir -p "$ZSH_PLUGINS"
+  git clone --depth 1 https://github.com/marlonrichert/zsh-snap.git "$ZSH_PLUGINS/zsh-snap"
+fi
 source "$ZSH_PLUGINS/zsh-snap/znap.zsh"
 ZSH=~[ohmyzsh/ohmyzsh]
 

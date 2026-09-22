@@ -1,6 +1,24 @@
-{{- $choices := list "desktop" "laptop" -}}
-{{- $chassisType := promptChoiceOnce . "chassisType" "Qual o tipo deste dispositivo? (desktop/laptop)" $choices "desktop" -}}
-{{- $setupQuickshell := promptBoolOnce . "setupQuickshell" "Deseja clonar e configurar o Quickshell (barra/widgets) nesta máquina?" true -}}
+{{- /* Detecta automaticamente se a máquina não tem GUI: sem monitor conectado e sem target gráfico do systemd */ -}}
+{{- $isHeadlessDetected := false -}}
+{{- if eq .chezmoi.os "linux" -}}
+{{-   $target := output "sh" "-c" "systemctl get-default 2>/dev/null || true" | trim -}}
+{{-   $connected := output "sh" "-c" "grep -l ^connected /sys/class/drm/card*-*/status 2>/dev/null | head -n1 || true" | trim -}}
+{{-   if and (ne $target "graphical.target") (eq $connected "") -}}
+{{-     $isHeadlessDetected = true -}}
+{{-   end -}}
+{{- end -}}
+
+{{- $chassisDefault := "desktop" -}}
+{{- if $isHeadlessDetected -}}
+{{-   $chassisDefault = "headless" -}}
+{{- end -}}
+{{- $choices := list "desktop" "laptop" "headless" -}}
+{{- $chassisType := promptChoiceOnce . "chassisType" "Qual o tipo deste dispositivo? (desktop/laptop/headless)" $choices $chassisDefault -}}
+
+{{- $setupQuickshell := false -}}
+{{- if ne $chassisType "headless" -}}
+{{-   $setupQuickshell = promptBoolOnce . "setupQuickshell" "Deseja clonar e configurar o Quickshell (barra/widgets) nesta máquina?" true -}}
+{{- end -}}
 
 [data]
     chassisType = {{ $chassisType | quote }}

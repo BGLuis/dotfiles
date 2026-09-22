@@ -1,41 +1,55 @@
 packages:
   # Pacotes para Arch Linux (pacman & yay)
   arch:
-    pacman:
-      - git
-      - git-lfs
-      - curl
-      - starship
-      - nano
-      - kitty
-      - hyprland
-      - hypridle
-      - hyprlock
-      - hyprpaper
-      - hyprsunset
-      - xdg-desktop-portal-hyprland
-      - xdg-desktop-portal-gtk
-      - polkit-kde-agent
-      - qt5-wayland
-      - qt6-wayland
-      - qt6ct
-      - quickshell
-      - btop
-      - lazygit
-      - grim
-      - slurp
-      - cliphist
-      - wl-clipboard
-      - ttf-jetbrains-mono-nerd
-      - ttf-material-symbols-variable
-      - tailscale
-      - discord
-    aur:
-      - vicinae-bin
-      - bitwarden
-      - visual-studio-code-bin
-      - spotify-launcher
-      - ttf-rubik-vf
+    # Essenciais de terminal: instalados em qualquer máquina, incluindo servidores headless
+    core:
+      pacman:
+        - git
+        - git-lfs
+        - curl
+        - starship
+        - nano
+        - zsh
+        - btop
+        - lazygit
+        - tailscale
+        - fzf
+        - fd
+        - bat
+        - eza
+        - lsd
+        - zoxide
+    # Pacotes de ambiente gráfico: pulados automaticamente quando chassisType = headless
+    gui:
+      pacman:
+        - kitty
+        - hyprland
+        - hypridle
+        - hyprlock
+        - hyprpaper
+        - hyprsunset
+        - xdg-desktop-portal-hyprland
+        - xdg-desktop-portal-gtk
+        - polkit-kde-agent
+        - qt5-wayland
+        - qt6-wayland
+        - qt6ct
+        - quickshell
+        - grim
+        - slurp
+        - cliphist
+        - wl-clipboard
+        - solaar
+        - dolphin
+        - ttf-jetbrains-mono-nerd
+        - ttf-material-symbols-variable
+        - discord
+      aur:
+        - vicinae-bin
+        - bitwarden
+        - visual-studio-code-bin
+        - spotify-launcher
+        - ttf-rubik-vf
     laptop:
       - brightnessctl
 

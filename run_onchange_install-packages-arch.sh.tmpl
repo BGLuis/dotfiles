@@ -11,14 +11,21 @@ fi
 
 # Carregar listas de pacotes
 PACMAN_ALL=(
-{{- range .packages.arch.pacman }}
+{{- range .packages.arch.core.pacman }}
   {{ . | quote }}
+{{- end }}
+{{- if ne .chassisType "headless" }}
+{{-   range .packages.arch.gui.pacman }}
+  {{ . | quote }}
+{{-   end }}
 {{- end }}
 )
 
 AUR_ALL=(
-{{- range .packages.arch.aur }}
+{{- if ne .chassisType "headless" }}
+{{-   range .packages.arch.gui.aur }}
   {{ . | quote }}
+{{-   end }}
 {{- end }}
 )
 

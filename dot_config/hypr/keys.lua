@@ -80,7 +80,7 @@ hl.bind("SUPER + SHIFT + N", hl.dsp.global("quickshell:CyclePlayer"))
 hl.bind("SUPER + N", hl.dsp.global("quickshell:ShowPlayer"))
 
 -- Blue light filter
-hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("/home/luis/.config/hypr/scripts/bluelight-toggle.sh"))
+hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("$HOME/.config/hypr/scripts/bluelight-toggle.sh"))
 hl.bind(mainMod .. " + SHIFT + equal", hl.dsp.exec_cmd("hyprctl hyprsunset temperature +500"), { repeating = true })
 hl.bind(mainMod .. " + SHIFT + minus", hl.dsp.exec_cmd("hyprctl hyprsunset temperature -500"), { repeating = true })
 

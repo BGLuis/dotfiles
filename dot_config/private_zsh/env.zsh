@@ -1,8 +1,8 @@
 export EDITOR=nano
 export VISUAL="$EDITOR"
-export SSH_AUTH_SOCK=/home/luis/.bitwarden-ssh-agent.sock
+export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
 
-export PATH="/home/luis/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 # NPM
 export PATH="$PATH:$HOME/.npm-global/bin"
