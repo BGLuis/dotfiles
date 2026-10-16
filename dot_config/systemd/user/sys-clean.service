@@ -1,0 +1,12 @@
+[Unit]
+Description=Rotina periodica de limpeza de caches e arquivos temporarios (sys-clean)
+Documentation=https://github.com/BGLuis/dotfiles
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/sys-clean --routine
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+StandardOutput=journal
+StandardError=journal

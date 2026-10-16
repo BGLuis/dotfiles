@@ -1,0 +1,11 @@
+[Unit]
+Description=Timer semanal para o servico sys-clean
+Documentation=https://github.com/BGLuis/dotfiles
+
+[Timer]
+OnCalendar=Mon *-*-* 12:00:00
+Persistent=true
+RandomizedDelaySec=30m
+
+[Install]
+WantedBy=timers.target

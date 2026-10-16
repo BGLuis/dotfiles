@@ -110,6 +110,43 @@ O chezmoi utiliza templates (`.tmpl`) para adaptar configurações de acordo com
 
 ---
 
+## 🧹 Rotinas de Manutenção & Limpeza (`sys-clean` & `sys-update`)
+
+O repositório inclui utilitários automáticos para manter o sistema limpo, rápido e atualizado:
+
+### 1. `sys-clean` — Diagnóstico e Limpeza Inteligente
+Disponível em `~/.local/bin/sys-clean` (ou via alias `clean` e `clean-scan`):
+* **`clean-scan` / `sys-clean --scan`**: Diagnostica o espaço ocupado por caches sem apagar nada.
+* **`sys-clean --system`**: Limpa cache do pacman (`paccache -rk2`), yay, logs do systemd e lixeira.
+* **`sys-clean --dev`**: Limpa caches pesados de desenvolvimento (`~/.npm`, `~/.gradle`, `~/go/pkg/mod`, Cargo).
+* **`sys-clean --docker`**: Limpa build cache, imagens órfãs e volumes não utilizados.
+* **`sys-clean --ai-mcp`**: Limpa temporários antigos do Gemini (`~/.gemini/tmp`) e navegadores headless do Playwright/Puppeteer.
+* **`sys-clean --builds [pasta]`**: Varre e limpa diretórios de compilação descartáveis (`target/`, `build/`, `node_modules/`).
+* **`sys-clean --all`**: Executa todas as limpezas de sistema e ferramentas.
+
+### 2. `sys-update` — Atualizações Unificadas
+Disponível em `~/.local/bin/sys-update` (ou via alias `update` e `update-check`):
+* **`update-check` / `sys-update --check`**: Lista atualizações pendentes (pacman oficiais, AUR e flatpaks).
+* **`update` / `sys-update`**: Executa a atualização completa do sistema e plugins.
+
+### 3. Rotinas Automáticas (Systemd User Timers)
+No Linux, o chezmoi configura timers periódicos que rodam em segundo plano de forma silenciosa e segura:
+* **`sys-clean.timer`**: Executa a limpeza segura de caches toda segunda-feira às 12:00.
+* **`sys-update-check.timer`**: Checa atualizações duas vezes na semana (seg/qui às 10:00) e envia notificação no desktop (`notify-send`) se houver pacotes novos.
+
+**Para desativar ou reativar qualquer rotina a qualquer momento:**
+```bash
+# Desativar:
+systemctl --user disable --now sys-clean.timer
+systemctl --user disable --now sys-update-check.timer
+
+# Reativar:
+systemctl --user enable --now sys-clean.timer
+systemctl --user enable --now sys-update-check.timer
+```
+
+---
+
 ## 🛠️ Comandos Úteis no Dia a Dia
 
 Os arquivos deste repositório estão localizados em:

@@ -1,0 +1,202 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# sys-update: Utilitário de atualização do sistema, AUR, flatpaks e dotfiles
+# ==============================================================================
+
+set -uo pipefail
+
+if [ -t 1 ]; then
+    BOLD="\033[1m"
+    RESET="\033[0m"
+    GREEN="\033[32m"
+    YELLOW="\033[33m"
+    RED="\033[31m"
+    BLUE="\033[34m"
+    CYAN="\033[36m"
+else
+    BOLD=""
+    RESET=""
+    GREEN=""
+    YELLOW=""
+    RED=""
+    BLUE=""
+    CYAN=""
+fi
+
+log_info() { echo -e "${BLUE}${BOLD}==>${RESET} ${BOLD}$*${RESET}"; }
+log_success() { echo -e "  ${GREEN}✓${RESET} $*"; }
+log_warn() { echo -e "  ${YELLOW}⚠${RESET} $*"; }
+log_err() { echo -e "  ${RED}✗${RESET} $*"; }
+
+# ------------------------------------------------------------------------------
+# 1. MODO CHECAGEM (--check)
+# ------------------------------------------------------------------------------
+check_updates() {
+    local send_notification=0
+    [ "${1:-}" = "--notify" ] && send_notification=1
+
+    local official_updates=""
+    local aur_updates=""
+    local official_count=0
+    local aur_count=0
+
+    # Arch Linux (checkupdates do pacman-contrib e yay)
+    if command -v checkupdates >/dev/null 2>&1; then
+        official_updates=$(checkupdates 2>/dev/null || true)
+        [ -n "$official_updates" ] && official_count=$(echo "$official_updates" | wc -l)
+    elif command -v pacman >/dev/null 2>&1; then
+        # Fallback sem pacman-contrib
+        official_updates=$(pacman -Qu 2>/dev/null || true)
+        [ -n "$official_updates" ] && official_count=$(echo "$official_updates" | wc -l)
+    fi
+
+    if command -v yay >/dev/null 2>&1; then
+        aur_updates=$(yay -Qua 2>/dev/null || true)
+        [ -n "$aur_updates" ] && aur_count=$(echo "$aur_updates" | wc -l)
+    fi
+
+    local total_count=$((official_count + aur_count))
+
+    if [ $send_notification -eq 1 ]; then
+        if [ $total_count -gt 0 ] && command -v notify-send >/dev/null 2>&1; then
+            notify-send \
+                --app-name="sys-update" \
+                --urgency=normal \
+                --icon=system-software-update \
+                "Atualizações do Sistema Disponíveis" \
+                "Existem $total_count atualizações pendentes ($official_count oficiais, $aur_count AUR).\nExecute 'sys-update' no terminal para atualizar."
+        fi
+    else
+        echo -e "${BOLD}==========================================================================${RESET}"
+        echo -e "${CYAN}${BOLD} 📦 Checagem de Atualizações Pendentes${RESET}"
+        echo -e "${BOLD}==========================================================================${RESET}"
+        echo ""
+        if [ $total_count -eq 0 ]; then
+            log_success "Seu sistema já está totalmente atualizado!"
+        else
+            echo -e "Total de atualizações: ${BOLD}$total_count${RESET} ($official_count oficiais, $aur_count AUR)"
+            echo ""
+            if [ $official_count -gt 0 ]; then
+                echo -e "${BOLD}[ Pacotes Oficiais ($official_count) ]${RESET}"
+                echo "$official_updates" | sed 's/^/  /'
+                echo ""
+            fi
+            if [ $aur_count -gt 0 ]; then
+                echo -e "${BOLD}[ Pacotes do AUR ($aur_count) ]${RESET}"
+                echo "$aur_updates" | sed 's/^/  /'
+                echo ""
+            fi
+            echo -e "Para aplicar todas as atualizações agora, execute: ${CYAN}sys-update${RESET}"
+        fi
+        echo -e "${BOLD}==========================================================================${RESET}"
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# 2. MODO APLICAÇÃO (Default)
+# ------------------------------------------------------------------------------
+apply_updates() {
+    echo -e "${BOLD}==========================================================================${RESET}"
+    echo -e "${CYAN}${BOLD} 🔄 Iniciando Atualização do Sistema e Aplicativos${RESET}"
+    echo -e "${BOLD}==========================================================================${RESET}"
+    echo ""
+
+    # Arch Linux
+    if command -v pacman >/dev/null 2>&1; then
+        if command -v yay >/dev/null 2>&1; then
+            log_info "Atualizando pacotes oficiais e AUR via yay..."
+            yay -Syu
+        else
+            log_info "Atualizando pacotes oficiais via pacman..."
+            sudo pacman -Syu
+        fi
+    # Debian / Ubuntu
+    elif command -v apt >/dev/null 2>&1; then
+        log_info "Atualizando repositórios e pacotes via apt..."
+        sudo apt update && sudo apt upgrade -y
+        if command -v snap >/dev/null 2>&1; then
+            log_info "Atualizando snaps..."
+            sudo snap refresh
+        fi
+    # macOS
+    elif command -v brew >/dev/null 2>&1; then
+        log_info "Atualizando Homebrew..."
+        brew update && brew upgrade
+    fi
+
+    # Flatpaks
+    if command -v flatpak >/dev/null 2>&1; then
+        echo ""
+        log_info "Verificando e atualizando Flatpaks..."
+        flatpak update -y || log_warn "Aviso ao atualizar Flatpaks."
+    fi
+
+    # Plugins do Zsh (se znap estiver presente)
+    if [ -f "$HOME/.local/share/zsh-plugins/zsh-snap/znap.zsh" ]; then
+        echo ""
+        log_info "Atualizando plugins do Zsh via Znap..."
+        zsh -c "source \$HOME/.local/share/zsh-plugins/zsh-snap/znap.zsh && znap pull" 2>/dev/null || true
+    fi
+
+    # Dotfiles / Chezmoi
+    if command -v chezmoi >/dev/null 2>&1; then
+        echo ""
+        log_info "Verificando se há atualizações nos dotfiles..."
+        chezmoi status || true
+    fi
+
+    echo ""
+    echo -e "${BOLD}==========================================================================${RESET}"
+    log_success "Atualização do sistema finalizada com sucesso!"
+    echo -e "${BOLD}==========================================================================${RESET}"
+}
+
+# ------------------------------------------------------------------------------
+# 3. PARSER DE ARGUMENTOS
+# ------------------------------------------------------------------------------
+show_help() {
+    cat << EOF
+sys-update - Utilitário de atualização de pacotes do sistema e ferramentas
+
+Uso: sys-update [OPÇÃO]
+
+Opções:
+  -c, --check          Apenas checa atualizações pendentes (sem instalar).
+  --notify             Usado junto com --check para emitir notificação no desktop via notify-send.
+  -h, --help           Exibe esta mensagem de ajuda.
+
+Sem argumentos:
+  Executa a atualização completa do sistema (pacman/yay, apt, brew, flatpaks e plugins).
+
+Exemplos:
+  sys-update
+  sys-update --check
+  sys-update --check --notify
+EOF
+}
+
+main() {
+    if [ $# -eq 0 ]; then
+        apply_updates
+        exit 0
+    fi
+
+    case "$1" in
+        -c|--check)
+            check_updates "${2:-}"
+            ;;
+        --notify)
+            check_updates "--notify"
+            ;;
+        -h|--help)
+            show_help
+            ;;
+        *)
+            log_err "Opção desconhecida: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

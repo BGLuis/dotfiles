@@ -1,0 +1,11 @@
+[Unit]
+Description=Timer semanal para checagem de atualizacoes de pacotes
+Documentation=https://github.com/BGLuis/dotfiles
+
+[Timer]
+OnCalendar=Mon,Thu *-*-* 10:00:00
+Persistent=true
+RandomizedDelaySec=30m
+
+[Install]
+WantedBy=timers.target

@@ -73,3 +73,16 @@ alias myip='curl -s ifconfig.me'
 alias ts='tailscale'
 alias tss='tailscale status'
 alias p='ping -c 5'
+
+# ==========================================
+# MANUTENÇÃO & ATUALIZAÇÃO
+# ==========================================
+alias update='sys-update'
+alias update-check='sys-update --check'
+alias clean='sys-clean'
+alias clean-scan='sys-clean --scan'
+
+# ==========================================
+# IA & ASSISTENTES
+# ==========================================
+alias agy-api='ANTIGRAVITY_APP_DATA_DIR="$HOME/.gemini/antigravity-cli-api" agy'

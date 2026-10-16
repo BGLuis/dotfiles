@@ -1,0 +1,9 @@
+[Unit]
+Description=Checagem periodica de atualizacoes de pacotes com notificacao desktop
+Documentation=https://github.com/BGLuis/dotfiles
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/sys-update --check --notify
+StandardOutput=journal
+StandardError=journal

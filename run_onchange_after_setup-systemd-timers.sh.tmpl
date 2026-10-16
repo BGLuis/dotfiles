@@ -1,0 +1,20 @@
+#!/bin/bash
+{{ if eq .chezmoi.os "linux" -}}
+# Hash dos timers para disparar onchange apenas quando os arquivos forem alterados:
+# sys-clean.service: {{ include "dot_config/systemd/user/sys-clean.service" | sha256sum }}
+# sys-clean.timer: {{ include "dot_config/systemd/user/sys-clean.timer" | sha256sum }}
+# sys-update-check.service: {{ include "dot_config/systemd/user/sys-update-check.service" | sha256sum }}
+# sys-update-check.timer: {{ include "dot_config/systemd/user/sys-update-check.timer" | sha256sum }}
+
+set -euo pipefail
+
+if command -v systemctl >/dev/null 2>&1; then
+    if systemctl --user is-active basic.target >/dev/null 2>&1 || [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+        echo "==> [chezmoi] Recarregando unidades de usuário do systemd e ativando timers de manutenção..."
+        systemctl --user daemon-reload
+        systemctl --user enable --now sys-clean.timer 2>/dev/null || true
+        systemctl --user enable --now sys-update-check.timer 2>/dev/null || true
+        echo "==> [chezmoi] Timers sys-clean.timer e sys-update-check.timer configurados!"
+    fi
+fi
+{{ end -}}

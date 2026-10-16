@@ -22,6 +22,7 @@ packages:
         - jq
         - ripgrep
         - kitty-terminfo
+        - pacman-contrib
     # Pacotes de ambiente gráfico: pulados automaticamente quando chassisType = headless
     gui:
       pacman:
@@ -51,6 +52,7 @@ packages:
         - ttf-jetbrains-mono-nerd
         - ttf-material-symbols-variable
         - discord
+        - libnotify
       aur:
         - vicinae-bin
         - visual-studio-code-bin
