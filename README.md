@@ -134,16 +134,20 @@ No Linux, o chezmoi configura timers periódicos que rodam em segundo plano de f
 * **`sys-clean.timer`**: Executa a limpeza segura de caches toda segunda-feira às 12:00.
 * **`sys-update-check.timer`**: Checa atualizações duas vezes na semana (seg/qui às 10:00) e envia notificação no desktop (`notify-send`) se houver pacotes novos.
 
-**Para desativar ou reativar qualquer rotina a qualquer momento:**
-```bash
-# Desativar:
-systemctl --user disable --now sys-clean.timer
-systemctl --user disable --now sys-update-check.timer
+#### ⚙️ Gerenciamento dos Timers (Ativar, Desativar e Status)
 
-# Reativar:
-systemctl --user enable --now sys-clean.timer
-systemctl --user enable --now sys-update-check.timer
-```
+| Ação | Comando do `sys-clean` | Comando do `sys-update` |
+|---|---|---|
+| **Ativar** | `systemctl --user enable --now sys-clean.timer` | `systemctl --user enable --now sys-update-check.timer` |
+| **Desativar** | `systemctl --user disable --now sys-clean.timer` | `systemctl --user disable --now sys-update-check.timer` |
+| **Ver Status** | `systemctl --user status sys-clean.timer` | `systemctl --user status sys-update-check.timer` |
+| **Rodar Agora** | `systemctl --user start sys-clean.service` | `systemctl --user start sys-update-check.service` |
+
+> [!TIP]
+> Para ver todas as rotinas ativas e a data da próxima execução no seu sistema:
+> ```bash
+> systemctl --user list-timers
+> ```
 
 ---
 
