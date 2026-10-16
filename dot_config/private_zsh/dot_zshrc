@@ -14,3 +14,12 @@ source "$ZDOTDIR/completions.zsh"
 for f in $ZDOTDIR/*.zsh; do
   [[ -s ${f}.zwc && ${f}.zwc -nt $f ]] || zcompile $f 2>/dev/null
 done
+
+# Inicia o Herdr automaticamente ao conectar via SSH
+if [[ -n "$SSH_CONNECTION" && -t 1 && -z "$HERDR_ENV" ]]; then
+  if (( $+commands[herdr] )); then
+    exec herdr
+  elif [[ -x "$HOME/.local/bin/herdr" ]]; then
+    exec "$HOME/.local/bin/herdr"
+  fi
+fi
