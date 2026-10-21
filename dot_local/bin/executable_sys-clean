@@ -29,6 +29,10 @@ log_success() { echo -e "  ${GREEN}✓${RESET} $*"; }
 log_warn() { echo -e "  ${YELLOW}⚠${RESET} $*"; }
 log_err() { echo -e "  ${RED}✗${RESET} $*"; }
 
+ASSUME_YES=0
+DRY_RUN=0
+STALE_DAYS=30
+
 get_size() {
     local target="$1"
     if [ -e "$target" ]; then
@@ -38,6 +42,48 @@ get_size() {
     else
         echo "0B"
     fi
+}
+
+# Sem terminal e sem --yes a resposta é sempre "não": nada destrutivo roda sem consentimento.
+confirm() {
+    local prompt="$1" resp
+    if [ "$DRY_RUN" = 1 ] || [ "$ASSUME_YES" = 1 ]; then
+        return 0
+    fi
+    if [ ! -t 0 ]; then
+        log_warn "Sem terminal interativo, pulando (use --yes para confirmar): $prompt"
+        return 1
+    fi
+    read -r -p "  $prompt [s/N]: " resp
+    [[ "$resp" =~ ^[sSyY]$ ]]
+}
+
+run() {
+    if [ "$DRY_RUN" = 1 ]; then
+        echo "  [dry-run] $*"
+    else
+        "$@"
+    fi
+}
+
+do_rm() {
+    local p
+    for p in "$@"; do
+        [ -e "$p" ] || continue
+        if [ "$DRY_RUN" = 1 ]; then
+            echo "  [dry-run] rm -rf $p ($(get_size "$p"))"
+        else
+            rm -rf "$p" 2>/dev/null || true
+        fi
+    done
+}
+
+# Diretórios ocultos (.cache, .cargo, .rustup...) são podados, exceto os de build listados.
+find_build_dirs() {
+    local root="$1" depth="$2"
+    find "$root" -mindepth 1 -maxdepth "$depth" -type d \
+        \( \( -name target -o -name build -o -name node_modules -o -name .angular -o -name .dart_tool \) -print -prune \
+        -o -name '.*' -prune \) 2>/dev/null || true
 }
 
 # ------------------------------------------------------------------------------
@@ -55,7 +101,7 @@ run_scan() {
     [ -d "$HOME/.cache/yay" ] && printf "  %-38s : %s\n" "Cache do Yay (~/.cache/yay)" "$(get_size "$HOME/.cache/yay")"
     if command -v pacman >/dev/null 2>&1; then
         local orphans
-        orphans=$(pacman -Qtdq 2>/dev/null | wc -l || echo "0")
+        orphans=$(pacman -Qtdq 2>/dev/null | wc -l)
         printf "  %-38s : %s pacotes\n" "Pacotes órfãos (pacman -Qtdq)" "$orphans"
     fi
     if command -v journalctl >/dev/null 2>&1; then
@@ -85,7 +131,7 @@ run_scan() {
             local bcache
             bcache=$(docker builder du 2>/dev/null | grep -E '^Total:' | awk '{print $2}' || echo "N/A")
             local dimages
-            dimages=$(docker images -f "dangling=true" -q 2>/dev/null | wc -l || echo "0")
+            dimages=$(docker images -f "dangling=true" -q 2>/dev/null | wc -l)
             printf "  %-38s : %s\n" "Docker Build Cache" "$bcache"
             printf "  %-38s : %s imagens\n" "Docker imagens órfãs (dangling)" "$dimages"
         else
@@ -111,25 +157,45 @@ run_scan() {
     [ -d "$HOME/.cache/vivaldi" ] && printf "  %-38s : %s\n" "Cache do Vivaldi (~/.cache/vivaldi)" "$(get_size "$HOME/.cache/vivaldi")"
     [ -d "$HOME/.cache/umu" ] && printf "  %-38s : %s\n" "Cache UMU/Proton (~/.cache/umu)" "$(get_size "$HOME/.cache/umu")"
 
+    # Dados que não são cache: apenas informativo, o sys-clean nunca remove
+    echo ""
+    echo -e "${BOLD}[ Dados de Aplicativos (informativo, não removidos) ]${RESET}"
+    [ -d "$HOME/.gemini/antigravity-cli" ] && printf "  %-38s : %s\n" "Sessões Antigravity (~/.gemini/antigravity-cli)" "$(get_size "$HOME/.gemini/antigravity-cli")"
+    [ -d "$HOME/.gemini/extensions" ] && printf "  %-38s : %s\n" "Extensões Gemini (~/.gemini/extensions)" "$(get_size "$HOME/.gemini/extensions")"
+    [ -d "$HOME/.rustup" ] && printf "  %-38s : %s\n" "Toolchains Rust (~/.rustup)" "$(get_size "$HOME/.rustup")"
+    [ -d "$HOME/.vscode-server" ] && printf "  %-38s : %s\n" "VS Code Server (~/.vscode-server)" "$(get_size "$HOME/.vscode-server")"
+
     # Varredura de Projetos (se existirem diretórios comuns)
-    local scan_dir="${1:-$HOME/Documents}"
+    local scan_dir="${1:-$HOME}"
     if [ -d "$scan_dir" ]; then
         echo ""
         echo -e "${BOLD}[ Artefatos de Build em ${scan_dir} ]${RESET}"
-        local build_targets
-        build_targets=$(find "$scan_dir" -maxdepth 3 -type d \( -name "target" -o -name "build" -o -name "node_modules" \) 2>/dev/null || true)
+        local build_targets found=0
+        build_targets=$(find_build_dirs "$scan_dir" 4)
         if [ -n "$build_targets" ]; then
             while IFS= read -r dir; do
                 [ -d "$dir" ] || continue
-                local s
-                s=$(get_size "$dir")
+                local kb
+                kb=$(du -sk "$dir" 2>/dev/null | cut -f1)
                 # Filtra apenas se for maior que 50M para não poluir
-                if [[ "$s" =~ [0-9]+(\.[0-9]+)?[GM] ]]; then
-                    printf "  %-50s : %s\n" "${dir#$HOME/}" "$s"
+                if [ "${kb:-0}" -ge 51200 ]; then
+                    printf "  %-50s : %s\n" "${dir#"$HOME"/}" "$(get_size "$dir")"
+                    found=1
                 fi
             done <<< "$build_targets"
-        else
-            echo "  Nenhum artefato relevante encontrado."
+        fi
+        [ "$found" = 0 ] && echo "  Nenhum artefato relevante encontrado."
+
+        local worktrees
+        worktrees=$(find "$scan_dir" -maxdepth 2 -name .git -type f 2>/dev/null || true)
+        if [ -n "$worktrees" ]; then
+            echo ""
+            echo -e "${BOLD}[ Git Worktrees em ${scan_dir} ]${RESET}"
+            while IFS= read -r gitfile; do
+                local wt
+                wt=$(dirname "$gitfile")
+                printf "  %-50s : %s\n" "${wt#"$HOME"/}" "$(get_size "$wt")"
+            done <<< "$worktrees"
         fi
     fi
 
@@ -145,49 +211,51 @@ run_scan() {
 
 clean_system() {
     log_info "Limpando caches do sistema e gerenciadores de pacotes..."
+    confirm "Limpar cache do pacman/yay, logs do systemd, miniaturas e lixeira?" || return 0
 
     # Pacman cache
     if command -v paccache >/dev/null 2>&1; then
         echo "  -> Executando paccache (mantendo 2 versões mais recentes)..."
-        sudo paccache -rk2 || log_warn "Aviso ao executar paccache -rk2"
+        run sudo paccache -rk2 || log_warn "Aviso ao executar paccache -rk2"
         echo "  -> Removendo pacotes desinstalados do cache..."
-        sudo paccache -ruk0 2>/dev/null || true
+        run sudo paccache -ruk0 2>/dev/null || true
     elif command -v pacman >/dev/null 2>&1; then
         echo "  -> Limpando cache do pacman (pacman -Sc)..."
-        sudo pacman -Sc --noconfirm || log_warn "Aviso no pacman -Sc"
+        run sudo pacman -Sc --noconfirm || log_warn "Aviso no pacman -Sc"
     fi
 
     # Yay cache
     if command -v yay >/dev/null 2>&1; then
         echo "  -> Limpando cache do Yay..."
-        yay -Sc --noconfirm 2>/dev/null || true
+        run yay -Sc --noconfirm 2>/dev/null || true
     fi
 
     # Journalctl logs
     if command -v journalctl >/dev/null 2>&1; then
         echo "  -> Reduzindo logs do systemd para 2 semanas..."
-        sudo journalctl --vacuum-time=2weeks 2>/dev/null || true
-        journalctl --user --vacuum-time=2weeks 2>/dev/null || true
+        run sudo journalctl --vacuum-time=2weeks 2>/dev/null || true
+        run journalctl --user --vacuum-time=2weeks 2>/dev/null || true
     fi
 
     # Lixeira e miniaturas
     echo "  -> Limpando miniaturas e lixeira..."
-    rm -rf "$HOME/.cache/thumbnails"/* 2>/dev/null || true
-    rm -rf "$HOME/.local/share/Trash"/* 2>/dev/null || true
+    do_rm "$HOME/.cache/thumbnails"/*
+    do_rm "$HOME/.local/share/Trash"/*
 
     # Pacotes órfãos (interativo se em terminal)
     if command -v pacman >/dev/null 2>&1; then
-        local orphans
-        orphans=$(pacman -Qtdq 2>/dev/null || true)
-        if [ -n "$orphans" ]; then
-            local count
-            count=$(echo "$orphans" | wc -l)
+        local orphans=()
+        mapfile -t orphans < <(pacman -Qtdq 2>/dev/null || true)
+        if [ ${#orphans[@]} -gt 0 ]; then
             echo ""
-            log_warn "Foram encontrados $count pacotes órfãos no sistema."
-            if [ -t 0 ]; then
+            log_warn "Foram encontrados ${#orphans[@]} pacotes órfãos no sistema."
+            if [ "$DRY_RUN" = 1 ]; then
+                echo "  [dry-run] sudo pacman -Rns ${orphans[*]}"
+            elif [ -t 0 ]; then
+                local resp
                 read -r -p "  Deseja remover os pacotes órfãos agora? [s/N]: " resp
                 if [[ "$resp" =~ ^[sSyY]$ ]]; then
-                    sudo pacman -Rns $orphans || log_warn "Não foi possível remover alguns órfãos."
+                    sudo pacman -Rns "${orphans[@]}" || log_warn "Não foi possível remover alguns órfãos."
                 fi
             fi
         fi
@@ -198,13 +266,14 @@ clean_system() {
 
 clean_dev() {
     log_info "Limpando caches de linguagens e ferramentas de desenvolvimento..."
+    confirm "Limpar caches de NPM, Gradle, Go, Cargo e Python (serão baixados de novo)?" || return 0
 
     # NPM
     if [ -d "$HOME/.npm/_cacache" ] || [ -d "$HOME/.npm/_npx" ]; then
         echo "  -> Limpando cache do NPM..."
-        rm -rf "$HOME/.npm/_cacache" "$HOME/.npm/_npx" 2>/dev/null || true
+        do_rm "$HOME/.npm/_cacache" "$HOME/.npm/_npx"
         if command -v npm >/dev/null 2>&1; then
-            npm cache clean --force 2>/dev/null || true
+            run npm cache clean --force 2>/dev/null || true
         fi
         log_success "Cache do NPM liberado."
     fi
@@ -213,30 +282,30 @@ clean_dev() {
     if [ -d "$HOME/.gradle/caches" ]; then
         echo "  -> Parando daemons do Gradle e limpando caches..."
         if command -v gradle >/dev/null 2>&1; then
-            gradle --stop 2>/dev/null || true
+            run gradle --stop 2>/dev/null || true
         fi
-        rm -rf "$HOME/.gradle/caches" "$HOME/.gradle/daemon" 2>/dev/null || true
+        do_rm "$HOME/.gradle/caches" "$HOME/.gradle/daemon"
         log_success "Caches do Gradle liberados."
     fi
 
     # Go
     if [ -d "$HOME/go/pkg/mod" ] && command -v go >/dev/null 2>&1; then
         echo "  -> Limpando cache de módulos Go..."
-        go clean -modcache 2>/dev/null || true
+        run go clean -modcache 2>/dev/null || true
         log_success "Cache de módulos Go liberado."
     fi
 
     # Cargo
     if [ -d "$HOME/.cargo/registry/cache" ]; then
         echo "  -> Limpando arquivos .crate baixados pelo Cargo..."
-        rm -rf "$HOME/.cargo/registry/cache"/* 2>/dev/null || true
+        do_rm "$HOME/.cargo/registry/cache"/*
         log_success "Cache de crates do Cargo liberado."
     fi
 
     # Python uv / pip
     if [ -d "$HOME/.cache/uv" ] || [ -d "$HOME/.cache/pip" ]; then
         echo "  -> Limpando caches do Python (uv/pip)..."
-        rm -rf "$HOME/.cache/uv" "$HOME/.cache/pip" 2>/dev/null || true
+        do_rm "$HOME/.cache/uv" "$HOME/.cache/pip"
         log_success "Caches Python liberados."
     fi
 
@@ -255,25 +324,33 @@ clean_docker() {
         return 0
     fi
 
-    echo "  -> Limpando Docker builder cache..."
-    timeout 60 docker builder prune -a -f || log_warn "Timeout ou erro ao limpar build cache"
+    if confirm "Remover todo o build cache e todas as imagens sem container?"; then
+        echo "  -> Limpando Docker builder cache..."
+        run timeout 60 docker builder prune -a -f || log_warn "Timeout ou erro ao limpar build cache"
 
-    echo "  -> Removendo imagens não utilizadas..."
-    timeout 60 docker image prune -a -f || log_warn "Timeout ou erro ao limpar imagens"
+        echo "  -> Removendo imagens não utilizadas..."
+        run timeout 60 docker image prune -a -f || log_warn "Timeout ou erro ao limpar imagens"
+    fi
 
-    echo "  -> Removendo volumes órfãos..."
-    timeout 30 docker volume prune -f || log_warn "Timeout ou erro ao limpar volumes"
+    echo ""
+    echo "  Volumes existentes:"
+    docker volume ls 2>/dev/null | sed 's/^/    /'
+    if confirm "Remover volumes sem container associado? (os dados deles serão perdidos)"; then
+        echo "  -> Removendo volumes órfãos..."
+        run timeout 30 docker volume prune -f || log_warn "Timeout ou erro ao limpar volumes"
+    fi
 
     log_success "Limpeza do Docker concluída."
 }
 
 clean_ai_mcp() {
     log_info "Limpando caches de IA, MCP e navegadores headless..."
+    confirm "Limpar ~/.gemini/tmp, navegadores headless e índice do Vicinae?" || return 0
 
     # Gemini temp files
     if [ -d "$HOME/.gemini/tmp" ]; then
         echo "  -> Limpando diretórios temporários em ~/.gemini/tmp..."
-        rm -rf "$HOME/.gemini/tmp"/* 2>/dev/null || true
+        do_rm "$HOME/.gemini/tmp"/*
         log_success "Temporários do Gemini liberados."
     fi
 
@@ -289,21 +366,21 @@ clean_ai_mcp() {
     for bpath in "${browser_caches[@]}"; do
         if [ -d "$bpath" ]; then
             echo "  -> Removendo $bpath ($(get_size "$bpath"))..."
-            rm -rf "$bpath" 2>/dev/null || true
+            do_rm "$bpath"
         fi
     done
 
     # Vicinae file indexer
     if [ -d "$HOME/.cache/vicinae/file-indexer" ]; then
         echo "  -> Resetando cache do indexador Vicinae..."
-        rm -rf "$HOME/.cache/vicinae/file-indexer" 2>/dev/null || true
+        do_rm "$HOME/.cache/vicinae/file-indexer"
     fi
 
     log_success "Caches de IA e navegadores headless liberados."
 }
 
 clean_builds() {
-    local target_root="${1:-$HOME/Documents}"
+    local target_root="${1:-$HOME}"
     log_info "Buscando diretórios de build descartáveis em: $target_root"
 
     if [ ! -d "$target_root" ]; then
@@ -314,7 +391,7 @@ clean_builds() {
     local found_dirs=()
     while IFS= read -r d; do
         [ -d "$d" ] && found_dirs+=("$d")
-    done < <(find "$target_root" -maxdepth 4 -type d \( -name "target" -o -name "build" -o -name "node_modules" -o -name ".angular" -o -name ".dart_tool" \) 2>/dev/null || true)
+    done < <(find_build_dirs "$target_root" 4)
 
     if [ ${#found_dirs[@]} -eq 0 ]; then
         log_success "Nenhum diretório de build encontrado em $target_root."
@@ -325,61 +402,102 @@ clean_builds() {
     echo "Diretórios de compilação encontrados:"
     local i=1
     for d in "${found_dirs[@]}"; do
-        printf "  [%2d] %-8s %s\n" "$i" "$(get_size "$d")" "${d#$HOME/}"
+        printf "  [%2d] %-8s %s\n" "$i" "$(get_size "$d")" "${d#"$HOME"/}"
         ((i++))
     done
     echo ""
 
-    if [ -t 0 ]; then
-        echo -e "${YELLOW}Atenção: Esses diretórios contêm artefatos de compilação gerados.${RESET}"
-        echo -e "Eles podem ser recompilados a qualquer momento pelo cargo, flutter, npm etc."
-        echo ""
-        read -r -p "Digite os números para apagar (ex: 1 3 5), 'all' para todos ou [ENTER] para cancelar: " choice
-
-        if [ "$choice" = "all" ]; then
-            for d in "${found_dirs[@]}"; do
-                echo "  Removendo $d..."
-                rm -rf "$d" 2>/dev/null || true
-            done
-            log_success "Todos os diretórios de build listados foram removidos."
-        elif [ -n "$choice" ]; then
-            for num in $choice; do
-                if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#found_dirs[@]}" ]; then
-                    local sel="${found_dirs[$((num-1))]}"
-                    echo "  Removendo $sel..."
-                    rm -rf "$sel" 2>/dev/null || true
-                fi
-            done
-            log_success "Diretórios selecionados foram removidos."
-        else
-            echo "Operação cancelada. Nenhum diretório foi modificado."
-        fi
+    if [ "$DRY_RUN" = 1 ]; then
+        echo "  [dry-run] nada removido."
+        return 0
     fi
+
+    if [ ! -t 0 ]; then
+        log_warn "Modo não interativo: nada foi removido (rode em um terminal para escolher)."
+        return 0
+    fi
+
+    echo -e "${YELLOW}Atenção: Esses diretórios contêm artefatos de compilação gerados.${RESET}"
+    echo -e "Eles podem ser recompilados a qualquer momento pelo cargo, flutter, npm etc."
+    echo ""
+    read -r -p "Digite os números para apagar (ex: 1 3 5), 'all' para todos ou [ENTER] para cancelar: " choice
+
+    if [ "$choice" = "all" ]; then
+        for d in "${found_dirs[@]}"; do
+            echo "  Removendo $d..."
+            do_rm "$d"
+        done
+        log_success "Todos os diretórios de build listados foram removidos."
+    elif [ -n "$choice" ]; then
+        for num in $choice; do
+            if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#found_dirs[@]}" ]; then
+                local sel="${found_dirs[$((num-1))]}"
+                echo "  Removendo $sel..."
+                do_rm "$sel"
+            fi
+        done
+        log_success "Diretórios selecionados foram removidos."
+    else
+        echo "Operação cancelada. Nenhum diretório foi modificado."
+    fi
+}
+
+# Só remove target/ de projetos Cargo (Cargo.toml ao lado) sem nenhum arquivo modificado
+# nos últimos N dias; o mtime do diretório não serve porque o cargo altera só arquivos internos.
+clean_stale_targets() {
+    local root="${1:-$HOME}" days="${2:-$STALE_DAYS}"
+    log_info "Buscando target/ de projetos Rust sem modificação há mais de $days dias em: $root"
+
+    if [ ! -d "$root" ]; then
+        log_err "Diretório $root não encontrado."
+        return 1
+    fi
+
+    local stale=() d
+    while IFS= read -r d; do
+        [ -f "$(dirname "$d")/Cargo.toml" ] || continue
+        if [ -z "$(find "$d" -type f -mtime "-$days" -print -quit 2>/dev/null)" ]; then
+            stale+=("$d")
+        fi
+    done < <(find_build_dirs "$root" 4 | grep '/target$' || true)
+
+    if [ ${#stale[@]} -eq 0 ]; then
+        log_success "Nenhum target/ antigo encontrado."
+        return 0
+    fi
+
+    for d in "${stale[@]}"; do
+        printf "  %-8s %s\n" "$(get_size "$d")" "${d#"$HOME"/}"
+    done
+
+    confirm "Remover ${#stale[@]} diretórios target/ listados (recompiláveis)?" || return 0
+    do_rm "${stale[@]}"
+    log_success "target/ antigos removidos."
 }
 
 # ------------------------------------------------------------------------------
 # 3. ROTINA AUTOMÁTICA DO SYSTEMD TIMER (--routine)
 # ------------------------------------------------------------------------------
+# Sem TTY o sudo precisa de NOPASSWD; a falha é registrada no journal em vez de engolida.
 run_routine() {
     log_info "[$(date '+%Y-%m-%d %H:%M:%S')] Iniciando rotina de manutenção periódica (sys-clean)..."
 
-    # 1. Pacman/Yay seguro
+    # 1. Pacman seguro
     if command -v paccache >/dev/null 2>&1; then
-        sudo paccache -rk2 2>/dev/null || true
-        sudo paccache -ruk0 2>/dev/null || true
-    fi
-    if command -v yay >/dev/null 2>&1; then
-        yay -Sc --noconfirm 2>/dev/null || true
+        sudo -n paccache -rk2 || log_warn "paccache -rk2 falhou (sudo sem senha configurado?)"
+        sudo -n paccache -ruk0 || log_warn "paccache -ruk0 falhou (sudo sem senha configurado?)"
+    elif command -v pacman >/dev/null 2>&1; then
+        log_warn "paccache ausente: instale pacman-contrib para limpar o cache do pacman."
     fi
 
     # 2. Systemd journals
     if command -v journalctl >/dev/null 2>&1; then
-        sudo journalctl --vacuum-time=2weeks 2>/dev/null || true
+        sudo -n journalctl --vacuum-time=2weeks || log_warn "journalctl --vacuum falhou (sudo sem senha configurado?)"
         journalctl --user --vacuum-time=2weeks 2>/dev/null || true
     fi
 
     # 3. Miniaturas velhas (> 14 dias)
-    find "$HOME/.cache/thumbnails" -type f -atime +14 -delete 2>/dev/null || true
+    find "$HOME/.cache/thumbnails" -type f -mtime +14 -delete 2>/dev/null || true
 
     # 4. Gemini tmp velhos (> 7 dias)
     find "$HOME/.gemini/tmp" -mindepth 1 -maxdepth 1 -mtime +7 -exec rm -rf {} + 2>/dev/null || true
@@ -400,6 +518,10 @@ run_routine() {
         timeout 60 docker image prune -f 2>/dev/null || true
     fi
 
+    # 8. target/ de projetos Rust parados
+    ASSUME_YES=1
+    clean_stale_targets "$HOME" "$STALE_DAYS"
+
     log_success "[$(date '+%Y-%m-%d %H:%M:%S')] Rotina de manutenção concluída com sucesso."
 }
 
@@ -410,41 +532,67 @@ show_help() {
     cat << EOF
 sys-clean - Utilitário de diagnóstico e limpeza do sistema e ambiente dev
 
-Uso: sys-clean [OPÇÃO]
+Uso: sys-clean [OPÇÃO]...
 
 Opções:
   -s, --scan [DIR]     Apenas diagnostica e exibe o uso de disco (sem apagar nada).
-                       Opcionalmente informe o diretório raiz de projetos (padrão: ~/Documents).
+                       Opcionalmente informe o diretório raiz de projetos (padrão: ~).
   -r, --routine        Executa a rotina periódica e segura (chamada pelo systemd timer).
   --system             Limpa caches do pacman/yay, logs velhos do systemd e lixeira.
   --dev                Limpa caches de ferramentas (NPM, Gradle, Go, Cargo, Python).
   --docker             Limpa Docker builder cache, imagens órfãs e volumes.
   --ai-mcp             Limpa temporários do Gemini (~/.gemini/tmp) e navegadores headless.
   --builds [DIR]       Varre diretórios de build (target/, build/, node_modules/) e pergunta o que apagar.
-  --all                Executa todas as limpezas de sistema, dev, docker e ai-mcp.
+  --stale-targets [DIR]
+                       Remove target/ de projetos Rust sem modificação há mais de ${STALE_DAYS} dias (padrão: ~).
+  --all                Executa --system, --dev, --docker, --ai-mcp e --stale-targets.
+  -y, --yes            Confirma automaticamente as limpezas (necessário sem terminal interativo).
+  -n, --dry-run        Mostra o que seria removido, sem apagar nada.
   -h, --help           Exibe esta mensagem de ajuda.
+
+As limpezas pedem confirmação; sem terminal e sem --yes elas são puladas.
 
 Exemplos:
   sys-clean --scan
-  sys-clean --builds ~/Documents
-  sys-clean --dev
-  sys-clean --all
+  sys-clean --builds ~
+  sys-clean --all --dry-run
+  sys-clean --dev --yes
 EOF
 }
 
 main() {
+    local args=() a
+    for a in "$@"; do
+        case "$a" in
+            -y|--yes) ASSUME_YES=1 ;;
+            -n|--dry-run) DRY_RUN=1 ;;
+            *) args+=("$a") ;;
+        esac
+    done
+    set -- "${args[@]+"${args[@]}"}"
+
     if [ $# -eq 0 ]; then
         # Sem argumentos: roda o scan completo e oferece ajuda
-        run_scan "$HOME/Documents"
+        run_scan "$HOME"
         exit 0
     fi
 
+    local dir
     while [ $# -gt 0 ]; do
         case "$1" in
-            -s|--scan)
+            -s|--scan|--builds|--stale-targets)
+                local opt="$1"
                 shift
-                run_scan "${1:-$HOME/Documents}"
-                exit 0
+                dir="$HOME"
+                if [ $# -gt 0 ] && [[ "$1" != -* ]]; then
+                    dir="$1"
+                    shift
+                fi
+                case "$opt" in
+                    -s|--scan) run_scan "$dir" ;;
+                    --builds) clean_builds "$dir" ;;
+                    --stale-targets) clean_stale_targets "$dir" "$STALE_DAYS" ;;
+                esac
                 ;;
             -r|--routine)
                 run_routine
@@ -466,16 +614,13 @@ main() {
                 clean_ai_mcp
                 shift
                 ;;
-            --builds)
-                shift
-                clean_builds "${1:-$HOME/Documents}"
-                exit 0
-                ;;
             --all)
                 clean_system
                 clean_dev
                 clean_docker
                 clean_ai_mcp
+                clean_stale_targets "$HOME" "$STALE_DAYS"
+                log_info "Outros build/ e node_modules/ não são removidos pelo --all; use --builds."
                 shift
                 ;;
             -h|--help)
