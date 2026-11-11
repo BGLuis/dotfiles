@@ -4,9 +4,7 @@ export LC_ALL="C.UTF-8"
 
 export EDITOR=nano
 export VISUAL="$EDITOR"
-if [[ -S "$HOME/.bitwarden-ssh-agent.sock" ]]; then
-  export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
-fi
+export SSH_AUTH_SOCK="${SSH_AUTH_SOCK:-$HOME/.bitwarden-ssh-agent.sock}"
 
 export PATH="$HOME/.local/bin:$PATH"
 
