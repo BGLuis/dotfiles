@@ -29,6 +29,42 @@ hl.gesture({
     direction = "horizontal",
     action = "workspace"
 })
+
+-- 3 dedos para cima: abrir menu de aplicativos do Quickshell
+hl.gesture({
+    fingers = 3,
+    direction = "up",
+    action = function()
+        hl.dispatch(hl.dsp.global("quickshell:OpenMenu"))
+    end
+})
+
+-- 3 dedos para baixo: alternar janela flutuante
+hl.gesture({
+    fingers = 3,
+    direction = "down",
+    action = function()
+        hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
+    end
+})
+
+-- 4 dedos para cima: abrir/ocultar Special Workspace (Scratchpad)
+hl.gesture({
+    fingers = 4,
+    direction = "up",
+    action = function()
+        hl.dispatch(hl.dsp.workspace.toggle_special("magic"))
+    end
+})
+
+-- 4 dedos para baixo: bloquear a tela
+hl.gesture({
+    fingers = 4,
+    direction = "down",
+    action = function()
+        hl.dispatch(hl.dsp.exec_cmd("quickshell -c widget ipc call shell lock"))
+    end
+})
 {{- end }}
 
 hl.device({
