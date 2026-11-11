@@ -45,6 +45,11 @@ packages:
         - wl-clipboard
         - solaar
         - dolphin
+        - ark
+        - zip
+        - unzip
+        - 7zip
+        - unrar
         - playerctl
         - vivaldi
         - bitwarden
