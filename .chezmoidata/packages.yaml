@@ -6,6 +6,7 @@ packages:
       pacman:
         - git
         - git-lfs
+        - github-cli
         - curl
         - starship
         - nano
@@ -79,6 +80,7 @@ packages:
       apt:
         - git
         - git-lfs
+        - github-cli
         - curl
         - nano
         - btop
@@ -100,6 +102,7 @@ packages:
     brews:
       - git
       - git-lfs
+      - gh
       - starship
       - nano
       - btop
@@ -117,6 +120,7 @@ packages:
   windows:
     winget:
       - Git.Git
+      - GitHub.cli
       - Starship.Starship
       - Bitwarden.Bitwarden
       - Tailscale.Tailscale
