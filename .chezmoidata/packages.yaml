@@ -57,6 +57,7 @@ packages:
         - playerctl
         - vivaldi
         - bitwarden
+        - gnome-keyring
         - spotify-launcher
         - ttf-jetbrains-mono-nerd
         - ttf-material-symbols-variable
