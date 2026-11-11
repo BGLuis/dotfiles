@@ -23,10 +23,25 @@ hl.config({
 })
 
 {{- if eq $chassisType "laptop" }}
+-- Trocar de workspace deslizando 4 dedos para os lados (esquerda/direita)
 hl.gesture({
-    fingers = 3,
+    fingers = 4,
     direction = "horizontal",
     action = "workspace"
+})
+
+-- 3 dedos para cima: abrir menu do Quickshell / lançador
+hl.gesture({
+    fingers = 3,
+    direction = "up",
+    action = "global quickshell:OpenMenu"
+})
+
+-- 3 dedos para baixo: alternar janela flutuante
+hl.gesture({
+    fingers = 3,
+    direction = "down",
+    action = "togglefloating"
 })
 {{- end }}
 
