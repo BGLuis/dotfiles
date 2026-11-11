@@ -75,6 +75,8 @@ packages:
     laptop:
       - brightnessctl
       - power-profiles-daemon
+      - fprintd
+      - libfprint
 
   # Pacotes para Debian/Ubuntu (apt)
   debian:

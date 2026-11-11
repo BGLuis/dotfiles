@@ -1,4 +1,22 @@
+{{- $chassisType := "desktop" -}}
+{{- if hasKey . "chassisType" -}}
+{{-   $chassisType = .chassisType -}}
+{{- end -}}
 source=~/.config/hypr/hyprlock/colors.conf
+
+{{- if eq $chassisType "laptop" }}
+auth {
+    pam:enabled = true
+    pam:module = hyprlock
+
+    fingerprint {
+        enabled = true
+        ready_message = (Escaneie a digital para desbloquear)
+        present_message = Lendo digital...
+        retry_delay = 250
+    }
+}
+{{- end }}
 
 background {
     color = rgba(181818FF)
