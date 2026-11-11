@@ -19,21 +19,16 @@ hl.config({
             disable_while_typing = true,
             tap_button_map = "lrm"
         }
-    },
-    gestures = {
-{{- if eq $chassisType "laptop" }}
-        workspace_swipe = true,
-        workspace_swipe_fingers = 3,
-        workspace_swipe_distance = 300,
-        workspace_swipe_invert = true,
-        workspace_swipe_min_speed_to_force = 30,
-        workspace_swipe_cancel_ratio = 0.5,
-        workspace_swipe_create_new = true,
-{{- else }}
-        -- workspace_swipe = false
-{{- end }}
     }
 })
+
+{{- if eq $chassisType "laptop" }}
+hl.gesture({
+    fingers = 3,
+    direction = "horizontal",
+    action = "workspace"
+})
+{{- end }}
 
 hl.device({
     name = "epic-mouse-v1",
