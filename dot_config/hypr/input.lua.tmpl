@@ -18,6 +18,7 @@ hl.config({
             tap_to_click = true,
             tap_and_drag = true,
             drag_lock = false,
+            drag_3fg = true,
             disable_while_typing = true,
             tap_button_map = "lrm"
         }
@@ -38,24 +39,6 @@ hl.gesture({
     direction = "up",
     action = function()
         hl.dispatch(hl.dsp.global("quickshell:OpenMenu"))
-    end
-})
-
--- 3 dedos para baixo: alternar janela flutuante
-hl.gesture({
-    fingers = 3,
-    direction = "down",
-    action = function()
-        hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
-    end
-})
-
--- 4 dedos para cima: abrir/ocultar Special Workspace (Scratchpad)
-hl.gesture({
-    fingers = 4,
-    direction = "up",
-    action = function()
-        hl.dispatch(hl.dsp.workspace.toggle_special("magic"))
     end
 })
 
