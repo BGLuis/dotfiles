@@ -67,6 +67,7 @@ packages:
         - visual-studio-code-bin
         - ttf-rubik-vf
         - bibata-cursor-theme
+        - claude-code
     laptop:
       - brightnessctl
       - power-profiles-daemon
