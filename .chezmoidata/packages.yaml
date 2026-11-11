@@ -39,6 +39,9 @@ packages:
         - qt5-wayland
         - qt6-wayland
         - qt6ct
+        - breeze
+        - breeze-gtk
+        - gnome-themes-extra
         - quickshell
         - grim
         - slurp
