@@ -53,6 +53,10 @@ packages:
         - ttf-material-symbols-variable
         - discord
         - libnotify
+        - networkmanager
+        - network-manager-applet
+        - blueman
+        - pavucontrol
       aur:
         - vicinae-bin
         - visual-studio-code-bin
@@ -60,6 +64,7 @@ packages:
         - bibata-cursor-theme
     laptop:
       - brightnessctl
+      - power-profiles-daemon
 
   # Pacotes para Debian/Ubuntu (apt)
   debian:
