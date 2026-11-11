@@ -8,6 +8,7 @@ if [[ ! -f "$ZSH_PLUGINS/zsh-snap/znap.zsh" ]]; then
   git clone --depth 1 https://github.com/marlonrichert/zsh-snap.git "$ZSH_PLUGINS/zsh-snap"
 fi
 source "$ZSH_PLUGINS/zsh-snap/znap.zsh"
+znap clone ohmyzsh/ohmyzsh
 ZSH=~[ohmyzsh/ohmyzsh]
 
 znap eval starship 'starship init zsh --print-full-init'
